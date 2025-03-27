@@ -29,7 +29,8 @@ namespace WS { namespace Core
                                 const std::string& ip, 
                                 const std::string& port, 
                                 const Config::Config& conf,
-                                int& connection_status);
+                                int& connection_status
+							);
 
 
   private:

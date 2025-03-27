@@ -185,19 +185,41 @@ namespace WS { namespace Core {
   //  Recieve and send
 
   int   Server::handleMsg(std::string msg, int socket_recv_from) {
-    Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
+    static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
+	
+	Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
 
     // get connection info
     const Server::ConnectionInfo* info = socket_infos_.at(socket_recv_from);
 
     // make response
-    int connection_status;
+    int connection_status = 1; //unexisting status for valgrind
+	//std::cout << "sock:" << socket_recv_from << std::endl;
+
+	//Check that msg is is finished(has \r\n\r\n). If not-> continue
+	if (msg.find("\r\n\r\n") == std::string::npos) {
+		socket_to_pending_request[socket_recv_from] += msg;
+		if (socket_to_pending_request[socket_recv_from].find("\r\n\r\n") != std::string::npos ) {
+			msg = socket_to_pending_request[socket_recv_from];
+			socket_to_pending_request[socket_recv_from].clear();
+		}
+		else
+			return CONNECTION_KEEPALIVE;
+	}
+	else {
+		if (!socket_to_pending_request[socket_recv_from].empty()) {
+			msg = socket_to_pending_request[socket_recv_from] + msg;
+			socket_to_pending_request[socket_recv_from].clear();
+		}
+	}
+
     std::string response = RequestHandler::handle(
-      msg,
-      info->ip_addr,
-      info->port,
-      this->conf_,
-      connection_status);
+		msg,
+		info->ip_addr,
+		info->port,
+		this->conf_,
+		connection_status
+	);
 
     // send response
     Utils::Logger::instance_.debug("SENDING RESPONSE");         // < DEBUG

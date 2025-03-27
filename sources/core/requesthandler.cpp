@@ -1,4 +1,5 @@
 #include "../../headers/core/requesthandler.hpp"
+#include "../../headers/core/server.hpp"
 #include "../../headers/core/pagegenerator.hpp"
 #include "../../headers/cgi/cgi.hpp"
 #include "../../headers/utils/logger.hpp"
@@ -19,13 +20,18 @@ namespace WS { namespace Core {
                                       const Config::Config& conf,
                                       int& connection_status)
   {
-    Utils::Logger::debug("RequestHandler::handle"); // < DEBUG
+	Utils::Logger::debug("RequestHandler::handle"); // < DEBUG
 
     Http::Request                 request;
     const Config::ServerConfig*   server = NULL;
     const Config::ServerLocation* location = NULL;
 
     std::string  response;
+
+	//if (raw_request.find("\r\n\r\n") != std::string::npos) {
+	//	Server::instance_	
+	//}
+	//return raw_request;
 
     try
     {
