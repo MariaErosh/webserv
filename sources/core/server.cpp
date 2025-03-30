@@ -165,111 +165,118 @@ namespace WS { namespace Core {
     return new_client_socket;
   }
 
-  void  Server::handleConnection(int client_socket, fd_set& writefds) {
-    if (recvMsg(client_socket) != CLIENT_DISCONNECTED && FD_ISSET(client_socket, &writefds)) {
-      // sendMsg(client_socket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
-    }
-  }
-
-  void  Server::handleDisconnection(int client_socket) {
-    std::stringstream ss;
-
-    if (close(client_socket) == -1)
-      throw std::runtime_error("Can't close() the client's connection: " + std::string(strerror(errno)));
-    FD_CLR(client_socket, &master_set_);
-    ss << "Client #" << client_socket << " has disconnected";
-    Utils::Logger::instance_.info(ss.str());
-  }
-
-
-  //  Recieve and send
-
-  int   Server::handleMsg(std::string msg, int socket_recv_from) {
-    static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
-	
-	Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
-
-    // get connection info
-    const Server::ConnectionInfo* info = socket_infos_.at(socket_recv_from);
-
-    // make response
-    int connection_status = 1; //unexisting status for valgrind
-	//std::cout << "sock:" << socket_recv_from << std::endl;
-
-	//Check that msg is is finished(has \r\n\r\n). If not-> continue
-	if (msg.find("\r\n\r\n") == std::string::npos) {
-		socket_to_pending_request[socket_recv_from] += msg;
-		if (socket_to_pending_request[socket_recv_from].find("\r\n\r\n") != std::string::npos ) {
-			msg = socket_to_pending_request[socket_recv_from];
-			socket_to_pending_request[socket_recv_from].clear();
-		}
-		else
-			return CONNECTION_KEEPALIVE;
-	}
-	else {
-		if (!socket_to_pending_request[socket_recv_from].empty()) {
-			msg = socket_to_pending_request[socket_recv_from] + msg;
-			socket_to_pending_request[socket_recv_from].clear();
+	void  Server::handleConnection(int client_socket, fd_set& writefds) {
+		if (recvMsg(client_socket) != CLIENT_DISCONNECTED && FD_ISSET(client_socket, &writefds)) {
+		// sendMsg(client_socket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
 		}
 	}
 
-    std::string response = RequestHandler::handle(
-		msg,
-		info->ip_addr,
-		info->port,
-		this->conf_,
-		connection_status
-	);
+	void	Server::handleDisconnection(int client_socket) {
+		std::stringstream ss;
 
-    // send response
-    Utils::Logger::instance_.debug("SENDING RESPONSE");         // < DEBUG
-    Utils::Logger::instance_.debug("{" + response + "}");       // < DEBUG
+		if (close(client_socket) == -1)
+			throw std::runtime_error("Can't close() the client's connection: " + std::string(strerror(errno)));
+		FD_CLR(client_socket, &master_set_);
+		ss << "Client #" << client_socket << " has disconnected";
+		Utils::Logger::instance_.info(ss.str());
+	}
 
-    sendMsg(socket_recv_from, response.c_str(), response.size());
 
-    Utils::Logger::instance_.debug("RESPONSE HAS BEEN SENDED"); // < DEBUG
+	//  Recieve and send
+	int	Server::handleMsg(std::string msg, int socket_recv_from) {
+		static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
+		
+		Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
 
-    if (connection_status == CONNECTION_CLOSE) {
-      handleDisconnection(socket_recv_from);
-      return CLIENT_DISCONNECTED;
-    }
-    return CONNECTION_KEEPALIVE;
-  }
+		// get connection info
+		const Server::ConnectionInfo* info = socket_infos_.at(socket_recv_from);
 
-  int  Server::recvMsg(int socket_recv_from) {
-    std::string       request;
-    char              buffer[64]; // max_body_size + header
-    int               ret_bytes;
+		// make response
+		int connection_status = 1; //unexisting status for valgrind
+		//std::cout << "sock:" << socket_recv_from << std::endl;
 
-    // recieve
-    std::memset(buffer, 0, sizeof(buffer));
-    while ((ret_bytes = recv(socket_recv_from, buffer, sizeof(buffer) - 1, MSG_DONTWAIT)) > 0) {
-      request += buffer;
-      std::memset(buffer, 0, sizeof(buffer));
-    }
+		//Check that msg is is finished(has \r\n\r\n). If not-> continue
+		if (msg.find("\r\n\r\n") == std::string::npos) {
+			socket_to_pending_request[socket_recv_from] += msg;
+			if (socket_to_pending_request[socket_recv_from].find("\r\n\r\n") != std::string::npos ) {
+				msg = socket_to_pending_request[socket_recv_from];
+				socket_to_pending_request[socket_recv_from].clear();
+			}
+			else
+				return CONNECTION_KEEPALIVE;
+		}
+		else {
+			if (!socket_to_pending_request[socket_recv_from].empty()) {
+				msg = socket_to_pending_request[socket_recv_from] + msg;
+				socket_to_pending_request[socket_recv_from].clear();
+			}
+		}
 
-    // handle
-    switch (ret_bytes) {
-      case 0: {
-        handleDisconnection(socket_recv_from);
-        return CLIENT_DISCONNECTED;
-      }
-      default: {
-        return handleMsg(request, socket_recv_from); // if any errors -> disconnect
-      }
-    }
-  }
+		std::string response = RequestHandler::handle(
+			msg,
+			info->ip_addr,
+			info->port,
+			this->conf_,
+			connection_status
+		);
 
-  void  Server::sendMsg(int socket_to_send, const char* msg, int msg_size) const {
-    int ret;
-    if ((ret = send(socket_to_send, msg, msg_size, 0)) == -1)
-      throw std::runtime_error("Can't send() message to the client: " + std::string(strerror(errno))); // It's a regular error, not an exception
-  }
+		// send response
+		Utils::Logger::instance_.debug("SENDING RESPONSE");         // < DEBUG
+		Utils::Logger::instance_.debug("{" + response + "}");       // < DEBUG
 
-  void  Server::closeListeningSockets() const {
-    for (size_t i = 0; i < conf_.server_list.size() ; i++) {
-      if (close(listening_sockets_[i]) == -1)
-        throw std::runtime_error("Can't close a listening socket: " + std::string(strerror(errno)));
-    }
-  }
+		sendMsg(socket_recv_from, response.c_str(), response.size());
+
+		Utils::Logger::instance_.debug("RESPONSE HAS BEEN SENDED"); // < DEBUG
+
+		if (connection_status == CONNECTION_CLOSE) {
+			handleDisconnection(socket_recv_from);
+			return CLIENT_DISCONNECTED;
+		}
+		return CONNECTION_KEEPALIVE;
+	}
+
+	int	Server::recvMsg(int socket_recv_from) {
+		std::string       request;
+		char              buffer[64]; // max_body_size + header
+		int               ret_bytes;
+
+		// recieve
+		std::memset(buffer, 0, sizeof(buffer));
+		while ((ret_bytes = recv(socket_recv_from, buffer, sizeof(buffer) - 1, MSG_DONTWAIT)) > 0) {
+			request += buffer;
+			std::memset(buffer, 0, sizeof(buffer));
+		}
+
+		// handle
+		/*switch (ret_bytes) {
+		case 0: {
+			handleDisconnection(socket_recv_from);
+			return CLIENT_DISCONNECTED;
+		}
+		default: {
+			return handleMsg(request, socket_recv_from); // if any errors -> disconnect
+		}
+		}*/
+		if (ret_bytes == 0) {
+			handleDisconnection(socket_recv_from);
+			return CLIENT_DISCONNECTED;
+		}
+		else {
+			return handleMsg(request, socket_recv_from); // if any errors -> disconnect
+		}
+		
+	}
+
+	void	Server::sendMsg(int socket_to_send, const char* msg, int msg_size) const {
+		int ret;
+		if ((ret = send(socket_to_send, msg, msg_size, 0)) == -1)
+			throw std::runtime_error("Can't send() message to the client: " + std::string(strerror(errno))); // It's a regular error, not an exception
+	}
+
+	void	Server::closeListeningSockets() const {
+		for (size_t i = 0; i < conf_.server_list.size() ; i++) {
+			if (close(listening_sockets_[i]) == -1)
+				throw std::runtime_error("Can't close a listening socket: " + std::string(strerror(errno)));
+		}
+	}
 }}
