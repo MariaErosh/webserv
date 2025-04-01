@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="style.css">
     <title>Flower Boutique</title>
+    <link rel="icon" href="data:,">
   </head>
   <body>
     <div class="page-header">
@@ -91,7 +92,7 @@
       <div class="container">
         <h2>Order Now</h2>
         <p>Place your order today and enjoy our special discounts for bulk purchases!</p>
-        <form class="order-form" action="thank-you.html" method="get">
+        <form class="order-form" onsubmit="return false;">
           <div class="form-item">
             <label for="fullname">Your Name:</label>
             <input type="text" name="fullname" id="fullname" required>

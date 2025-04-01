@@ -251,37 +251,3 @@ input[type="submit"]:hover {
 .social-links a:hover {
     color: #ff7f9c;
 }
-
-/* Thank You Page */
-.thank-you {
-    text-align: center;
-    padding: 50px 20px;
-    background-color: #f9f9f9;
-}
-
-.thank-you h1 {
-    font-size: 2.5em;
-    color: #23412f;
-    margin-bottom: 20px;
-}
-
-.thank-you p {
-    font-size: 1.2em;
-    color: #555;
-    margin-bottom: 30px;
-}
-
-.btn-home {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #ff7f9c;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
-
-.btn-home:hover {
-    background-color: #e76685;
-}

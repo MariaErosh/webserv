@@ -1,48 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    body {
-        font-family: "Arial", sans-serif;
-        text-align: center;
-        background: linear-gradient(135deg, #cb99ae, #75e398);
-        color: white;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .error-container {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-    h1 {
-        font-size: 80px;
-        margin-bottom: 10px;
-    }
-    h2 {
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        html {
+            color-scheme: light dark;
+        }
 
-<title>Error 404</title>
+        body {
+            width: 35em;
+            margin: 0 auto;
+            font-family: Tahoma, Verdana, Arial, sans-serif;
+            background-color: #fdf6e3;
+            color: #333;
+            text-align: center;
+        }
 
-<meta name="robots" content="noindex, follow">
+        h1 {
+            font-size: 3em;
+            color: #ff6f61;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            color: #6a994e;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .flower {
+            font-size: 2em;
+            margin: 1em 0;
+        }
+    </style>
 </head>
-
 <body>
-    <div class="error-container">
-        <h1>404</h1>
-        <h2>Page Not Found</h2>
-        <p>The page you are looking for does not exist or has been removed.</p>
+    <div id="errorblock">
+        <div class="errorblock" align="center">
+            <h2>Oops! We couldn't find that page...</h2>
+            <h1>404</h1>
+            <h2>Page Not Found</h2>
+            <p>It seems this flower is missing from our garden. Please check the URL and try again!</p>
+            <div class="flower">🌸 🌼 🌷 🌹 🌺 🌻</div>
+        </div>
     </div>
 </body>
 </html>
