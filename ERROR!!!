@@ -1,0 +1,47 @@
+1. Ошибка в логах, после запуска cgi: infinite_loop. в браузере 504, но в лог потом 404.
+
+2. Если в location НЕ указан method(по идее должны быть доступны все)
+
+3. Надо бы добавить остановку вебсервера из командной строки
+
+4. Загрузка файлов на сервер: 
+	работает только вариант, когда это текст и его целиком пихаем в body запроса:
+		curl -v -X POST --data-binary "@test.txt" http://localhost:8080/upload_and_delete/test.txt
+	Но это вообще не то, что нужно! должны делать через upload в html или -F "file=@test.txt"(если curl)
+	Тогда придет запрос с Content-Type: multipart/form-data; boundary=...
+		РАЗНИЦА МЕЖДУ --data-binary(текстовый документ) и  -F (файл):
+		
+		curl -v -X POST --data-binary "@test.txt" http://localhost:8080/upload_and_delete/test.txt
+
+/*
+POST /upload HTTP/1.1
+Host: localhost:8080
+Content-Type: text/plain
+Content-Length: 24
+
+Hello, I'm a test file.*/
+
+							Content-Type: text/plain (или application/octet-stream)
+							Тело: это просто содержимое файла, без всякой обёртки.
+
+							Парсить просто: считай весь body как файл.
+		
+		curl -v -X POST -F "file=@test.txt" http://localhost:8080/upload_and_delete/test.txt
+
+/*
+POST /upload HTTP/1.1
+Host: localhost:8080
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryXYZ
+Content-Length: 348
+
+------WebKitFormBoundaryXYZ
+Content-Disposition: form-data; name="file"; filename="test.txt"
+Content-Type: text/plain
+
+Hello, I'm a test file.
+------WebKitFormBoundaryXYZ--*/
+
+							Content-Type: multipart/form-data; boundary=...
+							Тело: состоит из полей формы, с разделителями (boundary) и метаданными.
+
+ 							Нужно разбирать тело и находить поля: name, filename, Content-Type, body.

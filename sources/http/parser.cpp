@@ -157,6 +157,7 @@ namespace WS { namespace Http
     if (status_code == PayloadTooLarge)     return "413 Payload Too Large";
     if (status_code == InternalServerError) return "500 Internal Server Error";
     if (status_code == NotImplemented)      return "501 Not Implemented";
+	if (status_code == GatewayTimeOut)      return "504 Gateway TimeOut";
     
     throw std::invalid_argument("unsupported status code");
   }

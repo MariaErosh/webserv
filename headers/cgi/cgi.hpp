@@ -36,6 +36,10 @@ namespace WS { namespace CGI {
 				virtual const char  *what() const throw();
 			};
 
+			class	GatewayTimeoutException: public std::exception {
+				virtual const char  *what() const throw();
+			};
+
 		private:			
 			std::map<std::string, std::string> env_;	//Map which contains ENVS for CGI
 

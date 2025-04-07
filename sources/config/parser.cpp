@@ -147,7 +147,7 @@ namespace WS { namespace Config{
 				else if (result[1] == "off")
 					newLocation.autoIndex = false;
 				else
-				throw WrongConfigException();
+					throw WrongConfigException();
 			}
 			else if (result[0] == "redirect" && len == 2)
 				newLocation.redirect = result[1];
@@ -159,7 +159,7 @@ namespace WS { namespace Config{
 				newLocation.root = "";
 				newLocation.cgi_path = "";
 				newLocation.redirect = "";
-				newLocation.autoIndex = true;
+				newLocation.autoIndex = false; //bad practice to show internal directory => by default - false
 				newLocation.method.clear();
 			}
 			else if (len == 0)

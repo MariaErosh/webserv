@@ -58,6 +58,12 @@ namespace WS { namespace CGI
 							const Config::ServerConfig& server) {
 		Utils::Logger::debug("CGI::Handler::exec");
 		initEnv(script_path, request, server);
+		/*try {
+			std::string result = executeCgi(script_path, (request.method == Http::POST) ? request.body : ""); 
+			return result;
+		} catch (Handler::GatewayTimeoutException& e) {
+			return RequestHandler::createErrorResponse(Http::GatewayTimeOut, request, server);
+		}*/
 		return executeCgi(script_path, (request.method == Http::POST) ? request.body : "");
 	}
 
@@ -125,8 +131,35 @@ namespace WS { namespace CGI
 			fclose(input);
 			// Main
 			char buffer[1024] = {0};
-			Utils::Logger::debug("CGI::Handler::executeCgi : wait");  
-			waitpid(pid, NULL, 0);
+			Utils::Logger::debug("CGI::Handler::executeCgi : wait");
+
+			int status;
+			time_t start_time = time(NULL);
+			while (true) {
+				pid_t result = waitpid(pid, &status, WNOHANG);
+				if (result == pid) 
+					break;
+				if (difftime(time(NULL), start_time) >= 5) {
+					// Kill process after 10s
+					Utils::Logger::error("CGI process timeout, terminating");
+					kill(pid, SIGKILL);
+					waitpid(pid, &status, 0);
+					///
+					// Clean up
+					fclose(output);
+					close(input_fd);
+					close(output_fd);
+					for (size_t i = 0; env[i]; i++)
+						delete[] env[i];
+					delete[] env;
+					///
+					throw GatewayTimeoutException();					
+				}
+				usleep(100000);
+
+			}
+			//waitpid(pid, NULL, 0);
+			
 			Utils::Logger::debug("CGI::Handler::executeCgi : seek");  
 			lseek(output_fd, 0, SEEK_SET);
 			int ret = 1;
@@ -158,4 +191,7 @@ namespace WS { namespace CGI
 		return "Exception thrown: fork error";
 	}
 
+	const char	*Handler::GatewayTimeoutException::what() const throw() {
+		return "Gateway Timeout";
+	};
 }}

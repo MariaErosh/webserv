@@ -19,7 +19,8 @@ namespace WS {
 			LengthRequired = 411,
 			PayloadTooLarge = 413,
 			InternalServerError = 500,
-			NotImplemented = 501
+			NotImplemented = 501,
+			GatewayTimeOut = 504
 		};
 	}
 }

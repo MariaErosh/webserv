@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <exception>
 
+
 namespace WS { namespace Core {
 
 	std::string	RequestHandler::handle(const std::string& raw_request, 
@@ -133,8 +134,8 @@ namespace WS { namespace Core {
 
 
 	std::string	RequestHandler::createErrorResponse(Http::StatusCode code,
-																	const Http::Request& request, 
-																	const Config::ServerConfig* server)	{
+													const Http::Request& request, 
+													const Config::ServerConfig* server)	{
 		Utils::Logger::debug("RequestHandler::createErrorResponse");
 		try{
 			Utils::Logger::error(request.headers.at("Host") + request.uri + ": " + Http::Parser::statusToString(code));
@@ -196,8 +197,13 @@ namespace WS { namespace Core {
 
 
 		/// Exec CGI
-		std::string cgi_response = CGI::Handler::instance_.exec(script_path, request, *server);    
-		Utils::Logger::info("{" + cgi_response + "}");
+		std::string cgi_response;
+		try{
+			cgi_response = CGI::Handler::instance_.exec(script_path, request, *server);    
+			Utils::Logger::info("{" + cgi_response + "}");
+		} catch (WS::CGI::Handler::GatewayTimeoutException& e) {
+			return RequestHandler::createErrorResponse(Http::GatewayTimeOut, request, server);
+		}
 
 		/// Get response
 		Http::Response  response(Http::Ok);
@@ -289,7 +295,8 @@ namespace WS { namespace Core {
 		Http::Response response;
 
 		std::string data = Utils::File::readFile(absolute_path.c_str());
-		::remove(absolute_path.c_str());
+		//::remove(absolute_path.c_str()); -- запрещено использовать! поэтому:
+		::unlink(absolute_path.c_str());
 
 		response.status_code = Http::Ok;
 		response.body = data;
@@ -356,13 +363,17 @@ namespace WS { namespace Core {
 			if (location->root[0] != '/')
 				prefix = Utils::File::getCurrentDir() + "/" + location->root;
 			prefix = location->root;
-			
 			// uri
 			std::string subpath = request.uri;
 			if (!Utils::File::pathExists((prefix + request.uri).c_str()))
 				subpath.erase(0, location->path.size());
 
-			return prefix + subpath;
+			std::string resultPath = prefix + subpath;
+			while (resultPath.find("//") != std::string::npos) {
+				resultPath.erase(resultPath.find("//"), 1);
+			}
+			Utils::Logger::debug("RequestHandler::getAbsolutePath = " + resultPath);
+			return resultPath;
 		}
 
 		// case 2. default (work dir + uri)
@@ -398,6 +409,8 @@ namespace WS { namespace Core {
 		if (ext == ".jpg")  return "image/jpeg";
 		if (ext == ".jpeg") return "image/jpeg";
 		if (ext == ".png")  return "image/png";
+		if (ext == ".json") return "application/json";
+		if (ext == ".pdf")  return "application/pdf";
 
 		return "text/plain";
 	}

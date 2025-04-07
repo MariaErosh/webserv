@@ -28,8 +28,8 @@ namespace WS { namespace Utils
     enum LogLevel
     {
       LOGLEV_ERROR = 0,
-      LOGLEV_INFO,
-      LOGLEV_DEBUG
+      LOGLEV_INFO = 0,
+      LOGLEV_DEBUG = 0
     };
 
     /* @brief Init logger before usage.
