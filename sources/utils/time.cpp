@@ -1,11 +1,8 @@
 #include "../../headers/utils/time.hpp"
 #include <ctime>
 
-namespace WS { namespace Utils
-{
-
-  std::string Time::getTimestamp(const char *format, bool localtime)
-  {
+namespace Utils {
+  std::string Time::getTimestamp(const char *format, bool localtime) {
     time_t      rawtime = std::time(NULL);
 
     struct tm*  tm_info = NULL;
@@ -20,4 +17,4 @@ namespace WS { namespace Utils
     return std::string(buffer);
   }
 
-}} //!namespace WS::Utils
+}

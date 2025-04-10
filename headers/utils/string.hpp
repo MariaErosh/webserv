@@ -6,59 +6,37 @@
 #include <vector>
 #include <exception>
 
-namespace WS { namespace Utils {
-  /* @brief Static class for String processing
-  */
-  class String
-  {
-  public:
-    /*  @brief Split string by delimeter
-        @param source       string to split
-        @param delim        delimiter as string
-    */
-    static std::vector<std::string>  split(const std::string& source, const std::string& delim);
+namespace Utils {
+	class String {
+	public:
+		//Split string by delimeter(string)
+		static std::vector<std::string>  split(const std::string& source, const std::string& delim);
 
-    /*  @brief Split string by delimeter
-        @param source       string to split
-        @param delim        delimiter as char
-    */
-    static std::vector<std::string>  split(const std::string& source, char delim);
+		//Split string by delimeter(symbol)
+		static std::vector<std::string>  split(const std::string& source, char delim);
 
 
-    /*  @brief Split string to two parts by delimeter (if it exists in string)
-        @param source       string to split
-        @param delim        delimiter as string
-    */
-    static std::vector<std::string>  splitOnce(const std::string& source, const std::string& delim);
+		/*  The function attempts to split a string only once using the specified delimiter.
+			source       string to split
+			delim        delimiter as string
+		*/
+		static std::vector<std::string>  splitOnce(const std::string& source, const std::string& delim);
 
-    /*  @brief Split string to two parts by delimeter (if it exists in string)
-        @param source       string to split
-        @param delim        delimiter as char
-    */
-    static std::vector<std::string>  splitOnce(const std::string& source, char delim);
+		// The function splits(by space) string for parsing.
+		static std::vector<std::string>  splitStr(std::string line);
 
-    /* @brief Split string for parsing. Separate by spaсe.
-      */
-    static std::vector<std::string>  splitStr(std::string line);
+		template <typename T>
+		static std::string  to_string(T data);
 
-    /* @brief Some type to string
-      */
-    template <typename T>
-    static std::string  to_string(T data);
-
-    /* @brief Convert entire string to lowercase (ASCII only)
-    */
-    static std::string  toLower(std::string text);
-
-  }; //!class String
+		// Convert string to lowercase 
+		static std::string  toLower(std::string text);
+	};
   
-  template <typename T>
-  std::string                          Utils::String::to_string(T data)
-  {
-    std::ostringstream result;
-
-    result << data;
-    return result.str();
-  }
+	template <typename T>
+	std::string	Utils::String::to_string(T data) {
+		std::ostringstream result;
+		result << data;
+		return result.str();
+  	}
   
-}} //!namespace WS::Utils
+}

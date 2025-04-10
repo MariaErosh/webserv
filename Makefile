@@ -49,7 +49,6 @@ SRCS		:=  main.cpp \
 				$(addprefix utils/,\
 					logger.cpp \
 					file.cpp \
-					debug.cpp \
 					time.cpp \
 					string.cpp \
 					exception.cpp \

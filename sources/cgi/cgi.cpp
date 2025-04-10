@@ -2,8 +2,7 @@
 #include "../../headers/cgi/cgi.hpp"
 #include "../../headers/utils/string.hpp"
 
-namespace WS { namespace CGI
-{
+namespace CGI {
 	Handler   Handler::instance_;
 
 	bool	Handler::addHeaderToEnv(const Http::Request &request,
@@ -21,33 +20,23 @@ namespace WS { namespace CGI
 							const Config::ServerConfig& server) {
 		Utils::Logger::debug("CGI::Handler::initEnv");
 
-		/// Basic
 		env_["AUTH_TYPE"] = "Basic";
 		env_["GATEWAY_INTERFACE"] = "CGI/1.1";
-
-		/// POST body
 		if (request.method == Http::POST) {
 			addHeaderToEnv(request, "Content-Lenght", "CONTENT_LENGHT");
 			addHeaderToEnv(request, "Content-Type", "CONTENT_TYPE");
 		}
-
-		// HTTP
 		addHeaderToEnv(request, "Accept", "HTTP_ACCEPT");
 		addHeaderToEnv(request, "Referer", "HTTP_REFERER");
 		addHeaderToEnv(request, "User-Agent", "HTTP_USER_AGENT");
 		addHeaderToEnv(request, "Accept-Encoding", "HTTP_ACCEPT_ENCODING");
 		addHeaderToEnv(request, "Accept-Language", "HTTP_ACCEPT_LANGUAGE");
-
-		// Request
-		env_["REQUEST_URI"] = request.uri;
+		addHeaderToEnv(request, "Host", "SERVER_NAME");
 		env_["REQUEST_METHOD"] = Http::Parser::methodToString(request.method);
-
-		//  Script
+		env_["REQUEST_URI"] = request.uri;
 		env_["SCRIPT_NAME"] = script_path;
 		env_["SCRIPT_FILENAME"] = script_path;
-
-		// Server
-		addHeaderToEnv(request, "Host", "SERVER_NAME");    
+		//addHeaderToEnv(request, "Host", "SERVER_NAME");    
 		env_["SERVER_PORT"] = server.port;
 		env_["SERVER_PROTOCOL"] = request.version;
 		env_["SERVER_SOFTWARE"] = "webserv/1.0";
@@ -66,7 +55,6 @@ namespace WS { namespace CGI
 		}*/
 		return executeCgi(script_path, (request.method == Http::POST) ? request.body : "");
 	}
-
 	
 
 	char	**Handler::getCharEnv()
@@ -95,22 +83,16 @@ namespace WS { namespace CGI
 
 	std::string	Handler::executeCgi(const std::string& scriptFile, const std::string& body) {    
 		Utils::Logger::debug("CGI::Handler::executeCgi");  
-
-		// Init tmp files
 		Utils::Logger::debug("CGI::Handler::executeCgi : tmp files");  
 		FILE  *input = tmpfile();
 		FILE  *output = tmpfile();
 		int input_fd = fileno(input);
 		int output_fd = fileno(output);
-
-		// Write body to input fd
 		Utils::Logger::debug("CGI::Handler::executeCgi : write to input");  
 		write(input_fd, body.c_str(), body.size());
 		lseek(input_fd, 0, SEEK_SET); // move the pointer to the beginning of the input_fd
-
-		// Fork and exec
-		Utils::Logger::debug("CGI::Handler::executeCgi : fork");  
 		
+		Utils::Logger::debug("CGI::Handler::executeCgi : fork");		
 		char**		env = getCharEnv();
 		std::string	result_body;
 		pid_t		pid = fork();
@@ -144,7 +126,6 @@ namespace WS { namespace CGI
 					Utils::Logger::error("CGI process timeout, terminating");
 					kill(pid, SIGKILL);
 					waitpid(pid, &status, 0);
-					///
 					// Clean up
 					fclose(output);
 					close(input_fd);
@@ -152,14 +133,13 @@ namespace WS { namespace CGI
 					for (size_t i = 0; env[i]; i++)
 						delete[] env[i];
 					delete[] env;
-					///
+
 					throw GatewayTimeoutException();					
 				}
 				usleep(100000);
 
 			}
-			//waitpid(pid, NULL, 0);
-			
+			//waitpid(pid, NULL, 0);			
 			Utils::Logger::debug("CGI::Handler::executeCgi : seek");  
 			lseek(output_fd, 0, SEEK_SET);
 			int ret = 1;
@@ -182,11 +162,9 @@ namespace WS { namespace CGI
 			delete[] env[i];
 		delete[] env;
 
-		// return
 		return result_body;
 	}
 
-	// Exceptions
 	const char	*Handler::ErrorMemoryException::what() const throw() {
 		return "Exception thrown: fork error";
 	}
@@ -194,4 +172,10 @@ namespace WS { namespace CGI
 	const char	*Handler::GatewayTimeoutException::what() const throw() {
 		return "Gateway Timeout";
 	};
-}}
+
+	Handler::Handler() {};
+	Handler::Handler(const Handler& other) {(void)other;};
+	Handler& Handler::operator=(const Handler& other) {(void)other; return *this;};
+	Handler::~Handler() {};
+}
+

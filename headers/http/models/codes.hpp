@@ -1,8 +1,7 @@
 #pragma once
-
-namespace WS { 
-	namespace Http {
-		enum StatusCode	{
+ 
+namespace Http {
+	enum StatusCode	{
 			Continue = 100,
 			Processing = 102,
 			Ok = 200,
@@ -21,6 +20,5 @@ namespace WS {
 			InternalServerError = 500,
 			NotImplemented = 501,
 			GatewayTimeOut = 504
-		};
-	}
+	};
 }

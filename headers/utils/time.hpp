@@ -2,7 +2,8 @@
 
 #include <string>
 
-namespace WS { namespace Utils
+//namespace WS { 
+	namespace Utils
 {
   /* @brief Utils for time processing
   */
@@ -23,4 +24,5 @@ namespace WS { namespace Utils
     static std::string getTimestamp(const char *format = "%Y-%m-%d %H:%M:%S", bool localtime=true);
 
   }; //!class File
-}} //!namespace WS::Utils
+}
+//} //!namespace WS::Utils

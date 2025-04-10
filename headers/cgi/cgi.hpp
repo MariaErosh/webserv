@@ -15,14 +15,9 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-
-namespace WS { namespace CGI {
+ 
+namespace CGI {
 	class Handler {
-		//private:
-		//Handler() {} // delete
-		//Handler(const Handler& other) {(void)other;} // delete
-
 		public:
 			static Handler  instance_;
 
@@ -59,6 +54,11 @@ namespace WS { namespace CGI {
 
 			// Execute CGI script
 			std::string   executeCgi(const std::string& script, 
-										const std::string& body);			
+										const std::string& body);
+			
+			Handler();
+			Handler(const Handler& other);
+			~Handler();
+			Handler &operator=(const Handler& other);
 	};
-}}
+}

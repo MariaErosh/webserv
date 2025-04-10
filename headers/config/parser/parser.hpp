@@ -6,9 +6,8 @@
 #include <fstream>
 #include <exception>
 
-namespace WS { namespace Config {
+ namespace Config {
 	class Parser {
-
 	public:
 		static void	parseFile(const char *filename, Config &out);
 		static void	parseConfig(std::ifstream& data, Config &out);
@@ -29,4 +28,4 @@ namespace WS { namespace Config {
 			virtual const char  *what() const throw();
 		};
 	};
-}}
+}

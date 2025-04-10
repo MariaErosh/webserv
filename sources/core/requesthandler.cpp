@@ -10,8 +10,7 @@
 #include <unistd.h>
 #include <exception>
 
-
-namespace WS { namespace Core {
+namespace Core {
 
 	std::string	RequestHandler::handle(const std::string& raw_request, 
 										const std::string& ip, 
@@ -186,7 +185,7 @@ namespace WS { namespace Core {
 		std::string script_path;
 
 		if (location->cgi_path[0] != '/')
-			script_path = Utils::File::getCurrentDir() + '/' + location->cgi_path;
+			script_path = Utils::File::getCurrDir() + '/' + location->cgi_path;
 		else
 			script_path = location->cgi_path;
 
@@ -201,7 +200,7 @@ namespace WS { namespace Core {
 		try{
 			cgi_response = CGI::Handler::instance_.exec(script_path, request, *server);    
 			Utils::Logger::info("{" + cgi_response + "}");
-		} catch (WS::CGI::Handler::GatewayTimeoutException& e) {
+		} catch (/*WS::*/CGI::Handler::GatewayTimeoutException& e) {
 			return RequestHandler::createErrorResponse(Http::GatewayTimeOut, request, server);
 		}
 
@@ -361,7 +360,7 @@ namespace WS { namespace Core {
 			// prefix
 			std::string prefix;
 			if (location->root[0] != '/')
-				prefix = Utils::File::getCurrentDir() + "/" + location->root;
+				prefix = Utils::File::getCurrDir() + "/" + location->root;
 			prefix = location->root;
 			// uri
 			std::string subpath = request.uri;
@@ -377,8 +376,11 @@ namespace WS { namespace Core {
 		}
 
 		// case 2. default (work dir + uri)
+		
+		std::string	resultPath2 = Utils::File::getCurrDir() + request.uri;
 		Utils::Logger::debug("RequestHandler::getAbsolutePath CASE 2");
-		return (Utils::File::getCurrentDir() + request.uri);
+		Utils::Logger::debug("RequestHandler::getAbsolutePath = " + resultPath2);
+		return (resultPath2);
 	}
 
 
@@ -414,4 +416,4 @@ namespace WS { namespace Core {
 
 		return "text/plain";
 	}
-}}
+}

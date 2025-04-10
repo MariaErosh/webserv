@@ -1,11 +1,10 @@
 #pragma once
-
 #include "../../http/http.hpp"
 #include "./location.hpp"
 #include <vector>
 #include <string>
 
-namespace WS { namespace Config {
+namespace Config {
 	struct ServerConfig {
 		std::vector<std::string>				server_name;
 		std::string								ip_addr;
@@ -14,4 +13,5 @@ namespace WS { namespace Config {
 		std::map<Http::StatusCode, std::string>	error_page;		
 		std::vector<ServerLocation>				location_list;
 	};
-}}
+}
+

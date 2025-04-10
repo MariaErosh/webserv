@@ -1,16 +1,9 @@
 #pragma once
-
 #include "./server.hpp"
 
-namespace WS { namespace Config
-{
-  /* @brief Config structure that contains 
-            all settings and servers of WebServer
-  */
-  struct Config 
-  {
+namespace Config {
+  struct Config {
+    std::vector<ServerConfig> server_list;
+  }; 
+}
 
-    std::vector<ServerConfig> server_list; 
-
-  }; //!class Config
-}} //!namespace WS::Config

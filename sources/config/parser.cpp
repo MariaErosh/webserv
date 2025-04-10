@@ -17,7 +17,8 @@
 #include <algorithm>
 #include <cctype>
 
-namespace WS { namespace Config{	
+//namespace WS { 
+	namespace Config{	
 
 	void	Parser::parseFile(const char *fileName, Config &out) {
 		std::ifstream	configFile(fileName);
@@ -207,4 +208,5 @@ namespace WS { namespace Config{
 		return "Exception: could not open configuration file";
 	} 
 
-}}
+}
+//}
