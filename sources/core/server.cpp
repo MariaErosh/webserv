@@ -130,8 +130,8 @@ namespace Core {
 			}
 			}
 		}
-		//usleep(100); // because too hot... // remove!    
-		}    
+		//usleep(100); // because too hot... // remove!
+		}
 		/// clean up
 		closeListeningSockets();
 	}
@@ -180,7 +180,7 @@ namespace Core {
 		//  Recieve and send
 		int	Server::handleMsg(std::string msg, int socket_recv_from) {
 			static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
-			
+
 			Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
 
 			// get connection info
@@ -198,7 +198,7 @@ namespace Core {
 					socket_to_pending_request[socket_recv_from].clear();
 				}
 				else
-					return CONNECTION_KEEPALIVE;
+					return CONNECTION_CONTINUE;
 			}
 			else {
 				if (!socket_to_pending_request[socket_recv_from].empty()) {
@@ -207,7 +207,7 @@ namespace Core {
 				}
 			}
 
-			std::string response = RequestHandler::handle(
+			std::string response = HttpRequestProcessor::handleClientInput (
 				msg,
 				info->ip_addr,
 				info->port,
@@ -217,17 +217,17 @@ namespace Core {
 
 			// send response
 			Utils::Logger::instance_.debug("SENDING RESPONSE");
-			Utils::Logger::instance_.debug("{" + response + "}"); 
+			Utils::Logger::instance_.debug("{" + response + "}");
 
 			sendMsg(socket_recv_from, response.c_str(), response.size());
 
 			Utils::Logger::instance_.debug("RESPONSE HAS BEEN SENDED");
 
-			if (connection_status == CONNECTION_CLOSE) {
+			if (connection_status == CONNECTION_TERMINATE){
 				handleDisconnection(socket_recv_from);
 				return CLIENT_DISCONNECTED;
 			}
-			return CONNECTION_KEEPALIVE;
+			return CONNECTION_CONTINUE;
 		}
 
 		int	Server::recvMsg(int socket_recv_from) {
@@ -260,7 +260,7 @@ namespace Core {
 			else {
 				return handleMsg(request, socket_recv_from); // if any errors -> disconnect
 			}
-			
+
 		}
 
 		void	Server::sendMsg(int socket_to_send, const char* msg, int msg_size) const {

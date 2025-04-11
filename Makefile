@@ -40,7 +40,7 @@ SRCS		:=  main.cpp \
 				) \
 				$(addprefix core/,\
 					server.cpp \
-					requesthandler.cpp \
+					HttpRequestProcessor.cpp \
 					pagegenerator.cpp \
 				) \
 				$(addprefix http/, \

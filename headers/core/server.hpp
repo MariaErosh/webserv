@@ -1,18 +1,18 @@
 #pragma once
 
-#include "./requesthandler.hpp"
+#include "./HttpRequestProcessor.hpp"
 #include "../../headers/config/config.hpp"
 #include <iostream>
 #include <vector>
 #include <set>
 #include <map>
-#include <sys/select.h> 
+#include <sys/select.h>
 
 #define CLIENT_DISCONNECTED -1
 
 namespace Core {
 
-  class Server  {  
+  class Server  {
 	/// Signleton
 	public:
 		static Server instance_;
@@ -30,7 +30,7 @@ namespace Core {
 		/* Runs the server.
 		*/
 		int     run(void);
-		
+
 	private:
 		/* Init configuration file
 		*/
@@ -52,7 +52,7 @@ namespace Core {
 		bool  isListening(int socket) const;
 
 		/* Function for accepting client connection
-		*  Throws exception  when accept() fails 
+		*  Throws exception  when accept() fails
 		*/
 		int   acceptConnection(int listening_socket) const;
 
@@ -104,7 +104,7 @@ namespace Core {
 				return (this->ip_addr < second.ip_addr);
 			}
 		};
-		
+
 		fd_set                                      master_set_;        // master set of all sockets
 		std::set<struct ConnectionInfo>             connections_set_;   // list of connection infos
 		std::vector<int>                            listening_sockets_; // list of listening sockets
