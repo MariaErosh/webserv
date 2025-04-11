@@ -14,8 +14,8 @@ namespace Core {
 		PageGenerator& PageGenerator::operator=(const PageGenerator& other) {(void)other; return *this;}
 
 		const std::string PageGenerator::error_pages_dir_    = "resources/default_pages/errors/";
-		const std::string PageGenerator::default_page_path_  = "resources/default_pages/default_index.html";
-		
+		const std::string PageGenerator::default_page_path_  = "resources/default_pages/default_page.html";
+
 		std::string   PageGenerator::generateErrorPage(Http::StatusCode status_code) {
 			Utils::Logger::debug("PageGenerator::generateErrorPage");
 
@@ -28,9 +28,9 @@ namespace Core {
 			Utils::Logger::debug("PageGenerator::generateErrorPage");
 			return Utils::File::readFile(error_page_path);
 		}
-		
+
 		std::string  PageGenerator::generateDefaultPage() {
-			Utils::Logger::debug("PageGenerator::generateDefaultPage");			
+			Utils::Logger::debug("PageGenerator::generateDefaultPage");
 			return Utils::File::readFile(PageGenerator::default_page_path_.c_str());
 		}
 
