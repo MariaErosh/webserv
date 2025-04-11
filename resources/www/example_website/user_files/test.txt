@@ -1,7 +1,0 @@
-CGI:
-	curl -X POST -d "name=Alice&message=Hello" http://localhost:8080/echo
-	curl "http://localhost:8080/echo"
-
-UPLOAD/DOWNLOAD:
-	curl -v -X POST --data-binary "@tests" http://localhost:8080/upload_and_delete/test.txt
-	curl -v -X POST --data-binary "@pict.jpg" http://localhost:8080/upload_and_delete/pict2.jpg -H "Expect:"

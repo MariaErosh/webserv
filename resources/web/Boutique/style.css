@@ -1,0 +1,253 @@
+/* General Reset */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+/* Header Section */
+.page-header {
+    background: url('img/flowers-background.jpg') no-repeat center center;
+    background-size: cover;
+    padding: 10px 0;
+    color: white;
+    text-align: center;
+}
+
+.header-logo img {
+    max-width: 300px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.main-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.main-nav li {
+    display: inline;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.main-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Promo Section */
+.promo h1 {
+    font-size: 3em;
+    margin: 0;
+    padding-top: 10px;
+    color: #23412f;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* New Arrivals Section */
+.new {
+    text-align: center;
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 20px;
+}
+
+.new h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #032011;
+    text-align: center;
+}
+
+.products {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px auto;
+    max-width: 100%;
+}
+
+.new-good {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.new-good img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.new-good h3 {
+    font-size: 1.5em;
+    margin: 10px 0;
+}
+
+.new-good p {
+    font-size: 1em;
+    color: #555;
+    margin: 10px 0;
+}
+
+.new-good .price {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-top: 10px;
+}
+
+/* Buttons */
+.btn-buy {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ff7f9c;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-buy:hover {
+    background-color: #e76685;
+}
+
+/* About Us Section */
+.about {
+    background-color: #fff;
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.about h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.about p {
+    font-size: 1em;
+    color: #555;
+}
+
+/* Order Section */
+.order {
+    background-color: #fff;
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.order h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.order-form {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.form-item {
+    margin-bottom: 15px;
+}
+
+.form-item label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-item input,
+.form-item textarea,
+.form-item select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+textarea {
+    resize: vertical;
+}
+
+input[type="submit"] {
+    background-color: #ff7f9c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #e76685;
+}
+
+/* Footer Section */
+.page-footer {
+    background-color: #333;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.footer-top {
+    margin-bottom: 20px;
+}
+
+.footer-logo img {
+    max-width: 100px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.footer-bottom p {
+    margin: 0;
+}
+
+.social-links a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+    color: #ff7f9c;
+}

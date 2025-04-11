@@ -5,3 +5,8 @@ CGI:
 UPLOAD/DOWNLOAD:
 	curl -v -X POST --data-binary "@tests" http://localhost:8080/upload_and_delete/test.txt
 	curl -v -X POST --data-binary "@pict.jpg" http://localhost:8080/upload_and_delete/pict2.jpg -H "Expect:"
+
+multiple servers with different hostnames:
+curl --resolve webserv.local:8080:127.0.0.1 http://webserv.local:8080/
+curl --resolve test.webserv.local:8082:127.0.0.1 http://test.webserv.local:8082/
+curl --resolve bloom.boutique.webserv.local:8083:127.0.0.1 http://bloom.boutique.webserv.local:8083/
