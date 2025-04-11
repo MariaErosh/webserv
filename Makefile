@@ -4,59 +4,41 @@ CC			:= c++
 CFLAGS		:= -Wall -Wextra -Werror -std=c++98 -g
 DEP_FLAGS	:= -MP -MMD
 
-SRCS_DIRS	:= $(addprefix sources, \
-					/ \
-		  			/core \
-					/cgi \
-					/utils \
-					/config \
-					/http \
-				)
+SRCS_DIRS := \
+	core \
+	cgi \
+	utils \
+	config \
+	config/parser \
+	http \
+	http/parser
 
-HDRS_DIRS	:= $(addprefix headers, \
-					/ \
-		  			/core \
-					/utils \
-					/cgi \
-					$(addprefix /config, \
-						/models \
-						/parser \
-					) \
-					$(addprefix /http, \
-						/models \
-						/parser \
-					) \
-				)
+HDRS_DIRS := \
+	core \
+	cgi \
+	utils \
+	config \
+	config/models \
+	config/parser \
+	http \
+	http/models \
+	http/parser
 
 vpath %.cpp	$(SRCS_DIRS)
 vpath %.hpp	$(HDRS_DIRS)
 
-SRCS		:=  main.cpp \
-				$(addprefix cgi/,\
-					cgi.cpp \
-				) \
-				$(addprefix config/, \
-					parser.cpp \
-				) \
-				$(addprefix core/,\
-					server.cpp \
-					HttpRequestProcessor.cpp \
-					pagegenerator.cpp \
-				) \
-				$(addprefix http/, \
-					parser.cpp \
-				) \
-				$(addprefix utils/,\
-					logger.cpp \
-					file.cpp \
-					time.cpp \
-					string.cpp \
-					exception.cpp \
-				)
-				# $(addprefix example_dir/,
-				#	 example1.cpp,
-				#	 example2.cpp
-				# )
+SRCS := main.cpp \
+	cgi/cgi.cpp \
+	config/parser/parserConfig.cpp \
+	core/server.cpp \
+	core/HttpRequestProcessor.cpp \
+	core/pagegenerator.cpp \
+	http/parser/parser.cpp \
+	utils/logger.cpp \
+	utils/file.cpp \
+	utils/time.cpp \
+	utils/string.cpp \
+	utils/exceptions.cpp
 
 OBJS_DIR	:= .objects
 OBJS		:= $(addprefix $(OBJS_DIR)/, \
