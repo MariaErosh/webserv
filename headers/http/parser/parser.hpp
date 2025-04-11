@@ -5,7 +5,6 @@
 #include "../models/methods.hpp"
 #include <sstream>
 
-namespace Http {
 	class Parser {
 		public:
 			/* Function for serializing server Response to ready-to-send data in string.
@@ -23,5 +22,4 @@ namespace Http {
 			static std::string	statusToString(StatusCode status_code);
 			static bool			needBodyForStatus(StatusCode status_code);
 		};
-}
 

@@ -3,7 +3,7 @@
 #include <string>
 #include <sys/stat.h>
 
-namespace Utils {
+
   class File{
 	public:
 		// The function return current work directory
@@ -29,5 +29,5 @@ namespace Utils {
 		File(void) {}
 
 	};
-}
+
 

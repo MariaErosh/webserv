@@ -11,7 +11,7 @@
 #include "../../headers/utils/file.hpp"
 #include "../../headers/utils/exceptions.hpp"
 
-namespace Utils {
+
 	std::string	File::getCurrDir(void) {
 		char pwd[1024];
 		getcwd(pwd, 1024);
@@ -39,17 +39,17 @@ namespace Utils {
 		absolute_path = std::string(filename);
 
 
-		Utils::Logger::debug(absolute_path);
+		Logger::debug(absolute_path);
 		std::ifstream file(absolute_path.c_str());
 
 		if (!file.is_open())
-		throw Utils::Exceptions::FileDoesNotExist();
+		throw Exceptions::FileDoesNotExist();
 
 		std::stringstream buffer;
 		buffer << file.rdbuf();
 
 		std::string text = buffer.str();
-		Utils::Logger::debug(text);
+		Logger::debug(text);
 		return text;
 	}
 
@@ -103,5 +103,4 @@ namespace Utils {
 		return (stat(path, &st) == 0);
 	}	
   
-}
-//}
+

@@ -1,8 +1,8 @@
 #include "../../headers/utils/time.hpp"
 #include <ctime>
 
-namespace Utils {
-  std::string Time::getTimestamp(const char *format, bool localtime) {
+
+std::string Time::getTimestamp(const char *format, bool localtime) {
     time_t      rawtime = std::time(NULL);
 
     struct tm*  tm_info = NULL;
@@ -15,6 +15,5 @@ namespace Utils {
     strftime(buffer, sizeof(buffer), format, tm_info);
 
     return std::string(buffer);
-  }
-
 }
+

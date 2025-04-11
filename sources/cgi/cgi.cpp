@@ -2,10 +2,9 @@
 #include "../../headers/cgi/cgi.hpp"
 #include "../../headers/utils/string.hpp"
 
-namespace CGI {
 	Handler   Handler::instance_;
 
-	bool	Handler::addHeaderToEnv(const Http::Request &request,
+	bool	Handler::addHeaderToEnv(const Request &request,
 									const std::string& header_name, 
 									const std::string& env_param) {    
 		if (request.headers.find(header_name) != request.headers.end()) {
@@ -16,13 +15,13 @@ namespace CGI {
 	}
 	
 	void	Handler::initEnv(const std::string& script_path,
-							const Http::Request& request,
-							const Config::ServerConfig& server) {
-		Utils::Logger::debug("CGI::Handler::initEnv");
+							const Request& request,
+							const ServerConfig& server) {
+		Logger::debug("Handler::initEnv");
 
 		env_["AUTH_TYPE"] = "Basic";
 		env_["GATEWAY_INTERFACE"] = "CGI/1.1";
-		if (request.method == Http::POST) {
+		if (request.method == POST) {
 			addHeaderToEnv(request, "Content-Lenght", "CONTENT_LENGHT");
 			addHeaderToEnv(request, "Content-Type", "CONTENT_TYPE");
 		}
@@ -32,7 +31,7 @@ namespace CGI {
 		addHeaderToEnv(request, "Accept-Encoding", "HTTP_ACCEPT_ENCODING");
 		addHeaderToEnv(request, "Accept-Language", "HTTP_ACCEPT_LANGUAGE");
 		addHeaderToEnv(request, "Host", "SERVER_NAME");
-		env_["REQUEST_METHOD"] = Http::Parser::methodToString(request.method);
+		env_["REQUEST_METHOD"] = Parser::methodToString(request.method);
 		env_["REQUEST_URI"] = request.uri;
 		env_["SCRIPT_NAME"] = script_path;
 		env_["SCRIPT_FILENAME"] = script_path;
@@ -43,17 +42,17 @@ namespace CGI {
 	}
 
 	std::string	Handler::exec(const std::string& script_path,
-							const Http::Request& request,
-							const Config::ServerConfig& server) {
-		Utils::Logger::debug("CGI::Handler::exec");
+							const Request& request,
+							const ServerConfig& server) {
+		Logger::debug("Handler::exec");
 		initEnv(script_path, request, server);
 		/*try {
-			std::string result = executeCgi(script_path, (request.method == Http::POST) ? request.body : ""); 
+			std::string result = executeCgi(script_path, (request.method == POST) ? request.body : ""); 
 			return result;
 		} catch (Handler::GatewayTimeoutException& e) {
-			return RequestHandler::createErrorResponse(Http::GatewayTimeOut, request, server);
+			return RequestHandler::createErrorResponse(GatewayTimeOut, request, server);
 		}*/
-		return executeCgi(script_path, (request.method == Http::POST) ? request.body : "");
+		return executeCgi(script_path, (request.method == POST) ? request.body : "");
 	}
 	
 
@@ -82,17 +81,17 @@ namespace CGI {
 	}
 
 	std::string	Handler::executeCgi(const std::string& scriptFile, const std::string& body) {    
-		Utils::Logger::debug("CGI::Handler::executeCgi");  
-		Utils::Logger::debug("CGI::Handler::executeCgi : tmp files");  
+		Logger::debug("Handler::executeCgi");  
+		Logger::debug("Handler::executeCgi : tmp files");  
 		FILE  *input = tmpfile();
 		FILE  *output = tmpfile();
 		int input_fd = fileno(input);
 		int output_fd = fileno(output);
-		Utils::Logger::debug("CGI::Handler::executeCgi : write to input");  
+		Logger::debug("Handler::executeCgi : write to input");  
 		write(input_fd, body.c_str(), body.size());
 		lseek(input_fd, 0, SEEK_SET); // move the pointer to the beginning of the input_fd
 		
-		Utils::Logger::debug("CGI::Handler::executeCgi : fork");		
+		Logger::debug("Handler::executeCgi : fork");		
 		char**		env = getCharEnv();
 		std::string	result_body;
 		pid_t		pid = fork();
@@ -105,7 +104,7 @@ namespace CGI {
 			dup2(input_fd, STDIN_FILENO);
 			dup2(output_fd, STDOUT_FILENO);
 			if (execve(scriptFile.c_str(), nll, env) < 0) {
-				Utils::Logger::error("EXECVE " + scriptFile + " WAS FAILED");
+				Logger::error("EXECVE " + scriptFile + " WAS FAILED");
 				exit(-1);
 			}
 		}
@@ -113,7 +112,7 @@ namespace CGI {
 			fclose(input);
 			// Main
 			char buffer[1024] = {0};
-			Utils::Logger::debug("CGI::Handler::executeCgi : wait");
+			Logger::debug("Handler::executeCgi : wait");
 
 			int status;
 			time_t start_time = time(NULL);
@@ -123,7 +122,7 @@ namespace CGI {
 					break;
 				if (difftime(time(NULL), start_time) >= 5) {
 					// Kill process after 10s
-					Utils::Logger::error("CGI process timeout, terminating");
+					Logger::error("CGI process timeout, terminating");
 					kill(pid, SIGKILL);
 					waitpid(pid, &status, 0);
 					// Clean up
@@ -140,10 +139,10 @@ namespace CGI {
 
 			}
 			//waitpid(pid, NULL, 0);			
-			Utils::Logger::debug("CGI::Handler::executeCgi : seek");  
+			Logger::debug("Handler::executeCgi : seek");  
 			lseek(output_fd, 0, SEEK_SET);
 			int ret = 1;
-			Utils::Logger::debug("CGI::Handler::executeCgi : read");  
+			Logger::debug("Handler::executeCgi : read");  
 			while (ret > 0) {
 				memset(buffer, 0 , 1024);
 				ret = read(output_fd, buffer, 1023);
@@ -151,7 +150,7 @@ namespace CGI {
 			}
 		}
 
-		Utils::Logger::debug("CGI::Handler::executeCgi : clean up");  
+		Logger::debug("Handler::executeCgi : clean up");  
 
 		// Clean up
 		fclose(output);
@@ -177,5 +176,5 @@ namespace CGI {
 	Handler::Handler(const Handler& other) {(void)other;};
 	Handler& Handler::operator=(const Handler& other) {(void)other; return *this;};
 	Handler::~Handler() {};
-}
+
 

@@ -6,7 +6,7 @@
 #include <vector>
 #include <exception>
 
-namespace Utils {
+
 	class String {
 	public:
 		//Split string by delimeter(string)
@@ -33,10 +33,9 @@ namespace Utils {
 	};
   
 	template <typename T>
-	std::string	Utils::String::to_string(T data) {
+	std::string	String::to_string(T data) {
 		std::ostringstream result;
 		result << data;
 		return result.str();
   	}
-  
-}
+

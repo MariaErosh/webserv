@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace Utils {
+
 
 	class Containers {
 	public:
@@ -15,4 +15,4 @@ namespace Utils {
 	bool	Containers::contains(Container container, const typename Container::value_type& value) {
 			return std::find(container.begin(), container.end(), value) != container.end();
 	}  
-}
+

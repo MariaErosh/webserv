@@ -5,7 +5,7 @@
 #include "../../headers/utils/time.hpp"
 #include "../../headers/utils/file.hpp"
 
-namespace Utils {
+
 	Logger  Logger::instance_;
 	Logger::LogLevel  Logger::minimum_log_level_ = LOGLEV_ERROR;
 	const std::string Logger::logs_directory_ = "resources/logs";
@@ -19,8 +19,8 @@ namespace Utils {
 
 	void  Logger::init(LogLevel min_log_level, bool dupl_to_file){
 		if (dupl_to_file) {
-			Utils::File::createPath(Logger::logs_directory_.c_str());
-			std::string date = Utils::Time::getTimestamp("%Y-%m-%d");
+			File::createPath(Logger::logs_directory_.c_str());
+			std::string date = Time::getTimestamp("%Y-%m-%d");
 			std::string filename = Logger::logs_directory_ + "/log_" + date + ".txt";
 			const char* filepath = filename.c_str();
 			Logger::output_fstream_.open(filepath						
@@ -62,7 +62,7 @@ namespace Utils {
 	void Logger::log(const std::string& message, std::ostream& os,
 					const char *prompt, const char *colors) {
 		if (Logger::timestamp_enabled_)
-			os << '[' << Utils::Time::getTimestamp() << "] ";
+			os << '[' << Time::getTimestamp() << "] ";
 
 		if (colors)
 			os << colors;
@@ -76,5 +76,5 @@ namespace Utils {
 
 		os << message << std::endl;
 	}
-}
+
 

@@ -4,7 +4,6 @@
 #include "../../headers/http/parser/parser.hpp"
 
 
-namespace Http {
 	bool Parser::needBodyForStatus(StatusCode status_code) {
 		// 1xx, 204, and 304 -- NO BODY
 		// all other: body or 'Content-Lenght: 0' if no body provided
@@ -14,13 +13,13 @@ namespace Http {
 	}
 
 	std::string  Parser::serializeResponse(const Response& data, bool ending) {
-		Utils::Logger::debug("Http::Parser::serializeResponse");
+		Logger::debug("serializeResponse");
 
 		//std::stringstream ss;
 		std::stringstream result;
 
-		result << data.version << ' '<< Parser::statusToString(data.status_code) << "\r\n";
-		result << "Date: " << Utils::Time::getTimestamp("%a, %d %b %Y %H:%M:%S GMT", false) << "\r\n";
+		result << data.version << ' '<< statusToString(data.status_code) << "\r\n";
+		result << "Date: " << Time::getTimestamp("%a, %d %b %Y %H:%M:%S GMT", false) << "\r\n";
 
 		/*{
 			std::map<std::string, std::string>::const_iterator  iter;
@@ -33,7 +32,7 @@ namespace Http {
 
 		// body
 		if (ending) {
-			if (Parser::needBodyForStatus(data.status_code)) {
+			if (needBodyForStatus(data.status_code)) {
 				result << "Content-Length: " << data.body.size() << "\r\n\r\n" << data.body;
 			}
 			else {
@@ -44,27 +43,27 @@ namespace Http {
 	}
 
 	Request	Parser::deserializeRequest(const std::string& data)	{
-		Utils::Logger::debug("Http::Parser::deserializeRequest");
+		Logger::debug("deserializeRequest");
 
 		if (data.empty())
 			throw std::invalid_argument("deserializeRequest exception: empty request");
 
 		// split headers and body
-		std::vector<std::string>  splitted_request = Utils::String::splitOnce(data, "\r\n\r\n");
+		std::vector<std::string>  splitted_request = String::splitOnce(data, "\r\n\r\n");
 
 		// split start-line and headers
-		std::vector<std::string>  splitted_raw_headers = Utils::String::split(splitted_request[0], "\r\n");
+		std::vector<std::string>  splitted_raw_headers = String::split(splitted_request[0], "\r\n");
 
 		Request request;
 		// start-line
 		{      
-			std::vector<std::string> splitted_startline = Utils::String::split(
+			std::vector<std::string> splitted_startline = String::split(
 				splitted_raw_headers[0], ' ');
 
 			if (splitted_startline.size() != 3)
 				throw std::invalid_argument("deserializeRequest exception: invalid start-line of request");
 
-			request.method = Parser::stringToMethod(splitted_startline[0]);
+			request.method = stringToMethod(splitted_startline[0]);
 			request.uri = splitted_startline[1];
 			request.version = splitted_startline[2];
 		}
@@ -82,7 +81,7 @@ namespace Http {
 				splitted_raw_headers[headers_index].erase(newline_index, 1);
 
 				// insert
-				splitted_header = Utils::String::split(splitted_raw_headers[headers_index], ": ");
+				splitted_header = String::split(splitted_raw_headers[headers_index], ": ");
 				request.headers.insert(std::make_pair(splitted_header[0], splitted_header[1]));
 				++headers_index;
 			}
@@ -100,7 +99,7 @@ namespace Http {
 	}  
 
 	std::string Parser::methodToString(Method method) {
-		Utils::Logger::debug("Http::Parser::methodToString");		
+		Logger::debug("methodToString");		
 		
 		if (method == POST) return "POST";
 		if (method == GET) return "GET";
@@ -109,7 +108,7 @@ namespace Http {
 	}
 
 	Method	Parser::stringToMethod(const std::string& source) {
-		Utils::Logger::debug("Http::Parser::stringToMethod");		
+		Logger::debug("stringToMethod");		
 		
 		if (source == "POST") return POST;
 		if (source == "GET") return GET;
@@ -118,7 +117,7 @@ namespace Http {
 	}	
 
 	std::string Parser::statusToString(StatusCode status_code) {
-		Utils::Logger::debug("Http::Parser::statusToString");
+		Logger::debug("statusToString");
 		
 		if (status_code == Continue)            return "100 Continue";
 		if (status_code == Processing)          return "102 Processing";
@@ -141,4 +140,3 @@ namespace Http {
 		
 		throw std::invalid_argument("unsupported status code");
 	}	
-}

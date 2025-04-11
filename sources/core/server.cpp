@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <stdlib.h>
 
-namespace Core {
 	Server  Server::instance_;
 
 	void  Server::init(const char* config_path) {
@@ -25,7 +24,7 @@ namespace Core {
 
 
 	void	Server::initConfig(const char* config_path) {
-			Config::Parser::parseFile(config_path, const_cast<Config::Config&>(this->conf_));
+			ParserConfig::parseFile(config_path, const_cast<Config&>(this->conf_));
 	}
 
 	void    Server::initConnectionsSet(void) {
@@ -139,7 +138,7 @@ namespace Core {
 
 	//  Connections
 	bool  Server::isListening(int socket) const {
-		return Utils::Containers::contains(this->listening_sockets_, socket);
+		return Containers::contains(this->listening_sockets_, socket);
 	}
 
 	int  Server::acceptConnection(int listening_socket) const {
@@ -152,10 +151,10 @@ namespace Core {
 		if ((new_client_socket = accept(listening_socket, (sockaddr *)&client, &client_size)) == -1)
 		throw std::runtime_error("Can't accept() the client: " + std::string(strerror(errno)));
 		ss << "Client #" << new_client_socket << " has been accepted";
-		Utils::Logger::instance_.info(ss.str());
+		Logger::instance_.info(ss.str());
 
 		ss1 << "Client #" << new_client_socket << ": " << inet_ntoa(client.sin_addr) << ":" << htons(client.sin_port); // remove!
-		Utils::Logger::instance_.debug(ss1.str());
+		Logger::instance_.debug(ss1.str());
 
 		return new_client_socket;
 	}
@@ -173,7 +172,7 @@ namespace Core {
 				throw std::runtime_error("Can't close() the client's connection: " + std::string(strerror(errno)));
 			FD_CLR(client_socket, &master_set_);
 			ss << "Client #" << client_socket << " has disconnected";
-			Utils::Logger::instance_.info(ss.str());
+			Logger::instance_.info(ss.str());
 		}
 
 
@@ -181,7 +180,7 @@ namespace Core {
 		int	Server::handleMsg(std::string msg, int socket_recv_from) {
 			static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
 
-			Utils::Logger::debug("#" + Utils::String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
+			Logger::debug("#" + String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
 
 			// get connection info
 			const Server::ConnectionInfo* info = socket_infos_.at(socket_recv_from);
@@ -216,12 +215,12 @@ namespace Core {
 			);
 
 			// send response
-			Utils::Logger::instance_.debug("SENDING RESPONSE");
-			Utils::Logger::instance_.debug("{" + response + "}");
+			Logger::instance_.debug("SENDING RESPONSE");
+			Logger::instance_.debug("{" + response + "}");
 
 			sendMsg(socket_recv_from, response.c_str(), response.size());
 
-			Utils::Logger::instance_.debug("RESPONSE HAS BEEN SENDED");
+			Logger::instance_.debug("RESPONSE HAS BEEN SENDED");
 
 			if (connection_status == CONNECTION_TERMINATE){
 				handleDisconnection(socket_recv_from);
@@ -275,4 +274,3 @@ namespace Core {
 					throw std::runtime_error("Can't close a listening socket: " + std::string(strerror(errno)));
 			}
 		}
-}

@@ -7,8 +7,8 @@ int main(int argc, const char *argv[]) {
     config_path = argv[1];
 
   try {
-    Utils::Logger::init(Utils::Logger::LOGLEV_INFO, true);
-    Core::Server& server = Core::Server::instance_;
+    Logger::init(Logger::LOGLEV_INFO, true);
+    Server& server = Server::instance_;
 
     server.init(config_path);
     server.run();

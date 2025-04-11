@@ -3,8 +3,6 @@
 #include <string>
 #include "../http/http.hpp"
 
-namespace Core {
-
   class PageGenerator {
 	private:
 		PageGenerator();
@@ -23,9 +21,8 @@ namespace Core {
 		static std::string  generateIndexPage(const std::string& path, std::string request_uri);
 
 		// This function generates default error page with error code
-		static std::string  generateErrorPage(Http::StatusCode status_code);
+		static std::string  generateErrorPage(StatusCode status_code);
 
 		// This function generates error page with custom html file
 		static std::string  generateErrorPage(const char *error_page_path);
 	};
-}

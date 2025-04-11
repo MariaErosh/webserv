@@ -10,10 +10,7 @@
 
 #define CLIENT_DISCONNECTED -1
 
-namespace Core {
-
   class Server  {
-	/// Signleton
 	public:
 		static Server instance_;
 
@@ -23,32 +20,23 @@ namespace Core {
 		Server& operator=(const Server&) { return *this; }
 
 	public:
-		/* Server initialization.
-		*/
+		// Server initialization.
 		void    init(const char* config_path);
 
-		/* Runs the server.
-		*/
+		// Runs the server.
 		int     run(void);
 
 	private:
-		/* Init configuration file
-		*/
+		// Init configuration file
 		void    initConfig(const char* config_path);
 
-		/* Init connections (not servers) list with IP:Port pairs
-		*/
+		// Init connections (not servers) list with IP:Port pairs
 		void    initConnectionsSet(void);
 
-		/* Init listening sockets
-		*/
+		// Init listening sockets
 		void    initSockets(void);
 
-
-	/// Runtime
-	//  Connections
-		/* Tells if the socket is a listening socket
-		*/
+		// Tells if the socket is a listening socket
 		bool  isListening(int socket) const;
 
 		/* Function for accepting client connection
@@ -56,40 +44,29 @@ namespace Core {
 		*/
 		int   acceptConnection(int listening_socket) const;
 
-		/* Handler for client connections
-		*/
+		// Handler for client connections
 		void  handleConnection(int client_socket, fd_set& writefds);
 
-		/* Handler for client disconnections
-		*/
+		// Handler for client disconnections
 		void  handleDisconnection(int client_socket);
 
-
-	//  Recieve and send
-		/* Recieve a message from a client
-		*/
+		// Recieve a message from a client
 		int   recvMsg(int socket_recv_from);
 
-		/* Handle a message recieved from a client
-		*/
+		// Handle a message recieved from a client
 		int   handleMsg(std::string msg, int msg_owner);
 
-		/* Send a message to a client
-		*/
+		// Send a message to a client
 		void  sendMsg(int socket_to_send, const char* msg, int msg_size) const;
 
-
-	//  Closing
-		/* Close all listening sockets
-		*/
+		// Close all listening sockets
 		void  closeListeningSockets() const;
 
 	private:
-		const Config::Config  conf_;
+		const Config  conf_;
 
 
-		/* Data struct of info about one connection, that can be used by different servers
-		*/
+		// Data struct of info about one connection, that can be used by different servers
 		struct ConnectionInfo {
 			std::string ip_addr;
 			std::string port;
@@ -111,4 +88,4 @@ namespace Core {
 		std::map<int, const struct ConnectionInfo*> socket_infos_;      // < socket to ConnectionInfo map
 
   };
-}
+

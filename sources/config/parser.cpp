@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   parser.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: meroshen <meroshen@student.42berlin.de>    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/21 20:39:46 by meroshen          #+#    #+#             */
-/*   Updated: 2025/03/21 20:39:46 by meroshen         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../../headers/utils/string.hpp"
 #include "../../headers/config/config.hpp"
 #include <cstdlib>
@@ -17,10 +5,8 @@
 #include <algorithm>
 #include <cctype>
 
-//namespace WS { 
-	namespace Config{	
 
-	void	Parser::parseFile(const char *fileName, Config &out) {
+	void	ParserConfig::parseFile(const char *fileName, Config &out) {
 		std::ifstream	configFile(fileName);
 		std::string		data;
 
@@ -31,7 +17,7 @@
 		configFile.close();
 	}
 
-	void	Parser::parseConfig(std::ifstream& configFile, Config &out) {
+	void	ParserConfig::parseConfig(std::ifstream& configFile, Config &out) {
 		std::string     data;
 		ServerConfig    new_server;
 		std::vector<std::string>  result;
@@ -56,13 +42,13 @@
 		return true;
 	}
 
-	void	Parser::parseServerConfig(std::ifstream& configFile, Config &out) {
+	void	ParserConfig::parseServerConfig(std::ifstream& configFile, Config &out) {
 		std::vector<std::string> 	result;
 		ServerConfig				newServer;
 		std::string					data;    
 
 		while(getline(configFile, data)) {
-			result = Utils::String::splitStr(data);
+			result = String::splitStr(data);
 			int len = (int)result.size();
 			if (len ==0)
 				continue;
@@ -91,7 +77,7 @@
 
 				for (size_t i = 1; i < result.size() - 1; ++i)
 					newServer.error_page.insert(std::make_pair(
-						static_cast<Http::StatusCode>(atoi(result[i].c_str())), error_page_uri));
+						static_cast<StatusCode>(atoi(result[i].c_str())), error_page_uri));
 			}
 			else if (result[0] == "location" && len == 2) {
 				parseServerLocation(configFile, newServer, result[1]);
@@ -111,7 +97,7 @@
 			throw WrongIpAddress();
 	}
 
-	void	Parser::parseServerLocation(std::ifstream& conffile, ServerConfig &out, std::string path)
+	void	ParserConfig::parseServerLocation(std::ifstream& conffile, ServerConfig &out, std::string path)
 	{
 		std::vector<std::string>	result;
 		ServerLocation				newLocation;
@@ -125,7 +111,7 @@
 			getline(conffile, data);
 			if (data.size() == 0)
 				break;
-			result = Utils::String::splitStr(data);
+			result = String::splitStr(data);
 			int len = (int)result.size();
 			if (result[0] == "method" && len > 1) {
 				for (int i = 1; i < len; i++)
@@ -139,10 +125,7 @@
 				newLocation.root = result[1];
 			}
 			else if (result[0] == "autoindex" && len == 2) {
-				result[1] = Utils::String::toLower(result[1]);
-				/*if (result[1] != "on" && result[1] != "off")
-					throw WrongConfigException();
-				newLocation.autoIndex = result[1];*/
+				result[1] = String::toLower(result[1]);
 				if (result[1] == "on")
 					newLocation.autoIndex = true;
 				else if (result[1] == "off")
@@ -168,17 +151,15 @@
 			else
 				throw WrongConfigException();
 		}
-			//if (newLocation.autoindex == "")
-			//newLocation.autoindex = "on";
 		out.location_list.push_back(newLocation);
 	}
 
 
-	bool	Parser::checkIp(std::string &ip_addr) {
+	bool	ParserConfig::checkIp(std::string &ip_addr) {
 		std::vector<std::string> 	data;
 
 		int flag = 0;
-		data = Utils::String::split(ip_addr, '.');
+		data = String::split(ip_addr, '.');
 		for (size_t i = 0; i < data.size(); i++) {
 			if (toInt(data[i]) == 255)
 				flag += 1;
@@ -188,7 +169,7 @@
 		return true;
 	}
 
-	int	Parser::toInt(std::string &data) {
+	int	ParserConfig::toInt(std::string &data) {
 		std::stringstream degree(data);
 
 		int res = 0;
@@ -196,17 +177,15 @@
 		return res;
 	}
 
-	const char	 *Parser::WrongIpAddress::what() const throw() {
+	const char	 *ParserConfig::WrongIpAddress::what() const throw() {
 		return "Exception: wrong ip address";
 	}
 
-	const char	*Parser::WrongConfigException::what() const throw() {
+	const char	*ParserConfig::WrongConfigException::what() const throw() {
 		return "Exception: wrong configuration file";
 	}
 
-	const char	*Parser::FileNotFoundException::what() const throw() {
+	const char	*ParserConfig::FileNotFoundException::what() const throw() {
 		return "Exception: could not open configuration file";
 	} 
 
-}
-//}

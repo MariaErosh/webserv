@@ -1,6 +1,5 @@
 #pragma once
  
-namespace Http {
 	enum StatusCode	{
 			Continue = 100,
 			Processing = 102,
@@ -21,4 +20,4 @@ namespace Http {
 			NotImplemented = 501,
 			GatewayTimeOut = 504
 	};
-}
+

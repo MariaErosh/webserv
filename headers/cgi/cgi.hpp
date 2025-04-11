@@ -16,15 +16,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
  
-namespace CGI {
+
 	class Handler {
 		public:
 			static Handler  instance_;
 
 			//Execute cgi file as bash script
 			std::string exec(const std::string& script_path,
-								const Http::Request& request,
-								const Config::ServerConfig& server);
+								const Request& request,
+								const ServerConfig& server);
 
 			// Exception for case when config data is uncorrect*/
 			class	ErrorMemoryException: public std::exception {
@@ -40,15 +40,15 @@ namespace CGI {
 
 			//Init enviroment variables for next execve
 			void	initEnv(const std::string& script_path,
-									const Http::Request& request,
-									const Config::ServerConfig& server);
+									const Request& request,
+									const ServerConfig& server);
 
 			char	**getCharEnv(void); //Convert ENVS to usable char** array
 
 			/* Check header and add in ENV if it exist
 			Return True if header exists and added to ENV, false otherwise
 			*/
-			bool	addHeaderToEnv(const Http::Request &request,
+			bool	addHeaderToEnv(const Request &request,
 										const std::string& header, 
 										const std::string& env_param);
 
@@ -61,4 +61,4 @@ namespace CGI {
 			~Handler();
 			Handler &operator=(const Handler& other);
 	};
-}
+

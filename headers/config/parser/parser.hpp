@@ -6,8 +6,8 @@
 #include <fstream>
 #include <exception>
 
- namespace Config {
-	class Parser {
+
+	class ParserConfig {
 	public:
 		static void	parseFile(const char *filename, Config &out);
 		static void	parseConfig(std::ifstream& data, Config &out);
@@ -28,4 +28,4 @@
 			virtual const char  *what() const throw();
 		};
 	};
-}
+

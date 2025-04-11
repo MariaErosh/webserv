@@ -5,14 +5,14 @@
 #include <fstream>
 #include <sys/types.h>
  
-namespace Utils {
+
 	class Logger {
 		public:
 			enum LogLevel
 			{
 				LOGLEV_ERROR = 0,
-				LOGLEV_INFO = 0,
-				LOGLEV_DEBUG = 0
+				LOGLEV_INFO,
+				LOGLEV_DEBUG
 			};
 
 		private:
@@ -52,5 +52,5 @@ namespace Utils {
 			// Print error message to stderr. status_code - status to return from function
 			static int  error(const std::string& message, int status_code = -1);
 	};
-}
+
 

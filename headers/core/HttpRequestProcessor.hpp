@@ -1,3 +1,5 @@
+
+
 #pragma once
 
 #include "../http/http.hpp"
@@ -9,7 +11,7 @@
 #define CONNECTION_CONTINUE   0
 
 
-namespace Core {
+
   class HttpRequestProcessor {
 	private:
 	HttpRequestProcessor() {}
@@ -18,69 +20,69 @@ namespace Core {
 		static std::string  handleClientInput(const std::string& rawPayload,
 											const std::string& sourceIp,
 											const std::string& sourcePort,
-											const Config::Config& settings,
+											const /**/Config& settings,
 											int& sessionState);
 
 
 	private:
 
-		static const Config::ServerConfig*    locateServerBlock(const Http::Request& req,
+		static const /**/ServerConfig*    locateServerBlock(const Request& req,
 																const std::string& ip,
 																const std::string& port,
-																const Config::Config& settings);
+																const Config& settings);
 
-		static const Config::ServerLocation*  locateRoutePath(const Http::Request& req,
-															const Config::ServerConfig& serverBlock);
+		static const ServerLocation*  locateRoutePath(const Request& req,
+															const ServerConfig& serverBlock);
 
-		static std::string      craftHttpReply(const Http::Request& req,
-												const Config::ServerConfig* server,
-												const Config::ServerLocation* route);
+		static std::string      craftHttpReply(const Request& req,
+												const ServerConfig* server,
+												const ServerLocation* route);
 
-		static std::string      craftErrorReply(Http::StatusCode errorCode,
-														const Http::Request& req,
-														const Config::ServerConfig* server);
+		static std::string      craftErrorReply(StatusCode errorCode,
+														const Request& req,
+														const ServerConfig* server);
 
 		static std::string      produceFallbackPage(void);
 
 		static std::string      redirectClient(const std::string& targetUrl);
 
-		static std::string      executeCGIScript(const Http::Request& req,
-												const Config::ServerConfig* server,
-												const Config::ServerLocation* route);
+		static std::string      executeCGIScript(const Request& req,
+												const ServerConfig* server,
+												const ServerLocation* route);
 
 
 	/// Methods
 		static std::string      processGET(const std::string& resolvedPath,
-												const Http::Request& req,
-												const Config::ServerConfig* server,
-												const Config::ServerLocation* route);
+												const Request& req,
+												const ServerConfig* server,
+												const ServerLocation* route);
 
 		static std::string      processPOST(const std::string& resolvedPath,
-												const Http::Request& req,
-												const Config::ServerConfig* server);
+												const Request& req,
+												const ServerConfig* server);
 
 		static std::string      processDELETE(const std::string& resolvedPath,
-													const Http::Request& req,
-													const Config::ServerConfig* server);
+													const Request& req,
+													const ServerConfig* server);
 
 
 	/// Index
 		static std::string   resolveIndexRoute(const std::string& resolvedPath,
-														const Http::Request& req,
-														const Config::ServerLocation& route);
+														const Request& req,
+														const ServerLocation& route);
 
 		static std::string   generateAutoIndexView(const std::string& resolvedPath,
-													const Http::Request& req);
+													const Request& req);
 
 
 	/// Utils
-		static std::string  mapToAbsolutePath(const Http::Request& req,
-											const Config::ServerLocation* route);
+		static std::string  mapToAbsolutePath(const Request& req,
+											const ServerLocation* route);
 
-		static bool         isRequestPermitted(const Http::Request& req,
-											const Config::ServerLocation& route);
+		static bool         isRequestPermitted(const Request& req,
+											const ServerLocation& route);
 
 		static std::string  inferMimeType(const std::string& fileExt);
 
 };
-}
+

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace Http {
+
 
 	class Response {
 		public:
@@ -16,5 +16,5 @@ namespace Http {
 				Response() : version("HTTP/1.1") {}
 				Response(StatusCode status) : version("HTTP/1.1"), status_code(status) {}
 	};
-}
+
 
