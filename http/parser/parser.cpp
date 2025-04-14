@@ -3,36 +3,25 @@
 #include "../../utils/time.hpp"
 #include "../../http/parser/parser.hpp"
 
-	bool Parser::needBodyForStatus(StatusCode status_code) {
-		// 1xx, 204, and 304 -- NO BODY
-		// all other: body or 'Content-Lenght: 0' if no body provided
-		return !((status_code > 100 && status_code < 200) // 1xx
-				|| status_code == 204
-				|| status_code == 304);
+	bool Parser::requiresBody(StatusCode statusCode) {
+		return !((statusCode > 100 && statusCode < 200)
+				|| statusCode == 204
+				|| statusCode == 304);
 	}
 
-	std::string  Parser::serializeResponse(const Response& data, bool ending) {
-		Logger::debug("serializeResponse");
+	std::string  Parser::createHttpResponse(const Response& responseData, bool includeBody) {
+		Logger::debug("createHttpResponse");
 
-		//std::stringstream ss;
 		std::stringstream result;
 
-		result << data.version << ' '<< statusToString(data.status_code) << "\r\n";
+		result << responseData.protocolVersion << ' '<< mapStatusToString(responseData.statusCode) << "\r\n";
 		result << "Date: " << Time::getTimestamp("%a, %d %b %Y %H:%M:%S GMT", false) << "\r\n";
-
-		/*{
-			std::map<std::string, std::string>::const_iterator  iter;
-			for (iter = data.headers.begin(); iter != data.headers.end(); ++iter)
-				result << iter->first << ": " << iter->second << "\r\n";
-		}*/
-		for (std::map<std::string, std::string>::const_iterator iter = data.headers.begin(); iter != data.headers.end(); ++iter) {
+		for (std::map<std::string, std::string>::const_iterator iter = responseData.httpHeaders.begin(); iter != responseData.httpHeaders.end(); ++iter) {
 			result << iter->first << ": " << iter->second << "\r\n";
 		}
-
-		// body
-		if (ending) {
-			if (needBodyForStatus(data.status_code)) {
-				result << "Content-Length: " << data.body.size() << "\r\n\r\n" << data.body;
+		if (includeBody) {
+			if (requiresBody(responseData.statusCode)) {
+				result << "Content-Length: " << responseData.body.size() << "\r\n\r\n" << responseData.body;
 			}
 			else {
 				result << "\r\n";
@@ -41,101 +30,90 @@
 		return result.str();
 	}
 
-	Request	Parser::deserializeRequest(const std::string& data)	{
-		Logger::debug("deserializeRequest");
+	Request	Parser::parseHttpRequest(const std::string& rawRequest) {
+		Logger::debug("parseHttpRequest");
 
-		if (data.empty())
-			throw std::invalid_argument("deserializeRequest exception: empty request");
+		if (rawRequest.empty())
+			throw std::invalid_argument("parseHttpRequest exception: empty request");
 
-		// split headers and body
-		std::vector<std::string>  splitted_request = String::splitOnce(data, "\r\n\r\n");
+		std::vector<std::string>  requestParts = String::tokenizeOnce(rawRequest, "\r\n\r\n");
 
-		// split start-line and headers
-		std::vector<std::string>  splitted_raw_headers = String::split(splitted_request[0], "\r\n");
+		std::vector<std::string>  headerLines = String::tokenize(requestParts[0], "\r\n");
 
-		Request request;
-		// start-line
-		{      
-			std::vector<std::string> splitted_startline = String::split(
-				splitted_raw_headers[0], ' ');
-
-			if (splitted_startline.size() != 3)
-				throw std::invalid_argument("deserializeRequest exception: invalid start-line of request");
-
-			request.method = stringToMethod(splitted_startline[0]);
-			request.uri = splitted_startline[1];
-			request.version = splitted_startline[2];
-		}
-
-		// headers
+		Request parsedRequest;
 		{
-			std::vector<std::string> splitted_header;
-			size_t headers_index = 1;
+			std::vector<std::string> startLineTokens = String::tokenize(headerLines[0], ' ');
 
-			while (headers_index < splitted_raw_headers.size())
+			if (startLineTokens.size() != 3)
+				throw std::invalid_argument("parseHttpRequest exception: invalid start-line of request");
+
+			parsedRequest.method = mapStringToMethod(startLineTokens[0]);
+			parsedRequest.resourcePath = startLineTokens[1];
+			parsedRequest.protocolVersion = startLineTokens[2];
+		}
+		{
+			std::vector<std::string> headerTokens;
+			size_t headerIndex = 1;
+
+			while (headerIndex < headerLines.size())
 			{
-				// clean up
-				size_t newline_index = splitted_raw_headers[headers_index].rfind("\r\n");
+				size_t newline_index = headerLines[headerIndex].rfind("\r\n");
 				if (newline_index != std::string::npos)
-				splitted_raw_headers[headers_index].erase(newline_index, 1);
-
-				// insert
-				splitted_header = String::split(splitted_raw_headers[headers_index], ": ");
-				request.headers.insert(std::make_pair(splitted_header[0], splitted_header[1]));
-				++headers_index;
+				headerLines[headerIndex].erase(newline_index, 1);
+				headerTokens = String::tokenize(headerLines[headerIndex], ": ");
+				parsedRequest.httpHeaders.insert(std::make_pair(headerTokens[0], headerTokens[1]));
+				++headerIndex;
 			}
 		}
-
-		// body
 		{
-			if (request.method == POST)	{
-				if (splitted_request.size() <= 1)
-					throw std::invalid_argument("deserializeRequest exception: missing empty line after headers");
-				request.body = splitted_request[1];
+			if (parsedRequest.method == POST)	{
+				if (requestParts.size() <= 1)
+					throw std::invalid_argument("parseHttpRequest exception: missing empty line after headers");
+				parsedRequest.body = requestParts[1];
 			}
 		}
-		return request;
-	}  
+		return parsedRequest;
+	}
 
-	std::string Parser::methodToString(Method method) {
-		Logger::debug("methodToString");		
-		
+	std::string Parser::mapMethodToString(Method method) {
+		Logger::debug("mapMethodToString");
+
 		if (method == POST) return "POST";
 		if (method == GET) return "GET";
 		if (method == DELETE) return "DELETE";
 		throw std::invalid_argument("unsupported HTTP method");
 	}
 
-	Method	Parser::stringToMethod(const std::string& source) {
-		Logger::debug("stringToMethod");		
-		
-		if (source == "POST") return POST;
-		if (source == "GET") return GET;
-		if (source == "DELETE") return DELETE;
-		throw std::invalid_argument("unsupported HTTP method");
-	}	
+	Method	Parser::mapStringToMethod(const std::string& methodString) {
+		Logger::debug("mapStringToMethod");
 
-	std::string Parser::statusToString(StatusCode status_code) {
-		Logger::debug("statusToString");
-		
-		if (status_code == Continue)            return "100 Continue";
-		if (status_code == Processing)          return "102 Processing";
-		if (status_code == Ok)                  return "200 OK";
-		if (status_code == Created)             return "201 Created";
-		if (status_code == Accepted)            return "202 Accepted";
-		if (status_code == NoContent)           return "204 No Content";
-		if (status_code == MovedPermanently)    return "301 Moved Permanently";
-		if (status_code == BadRequest)          return "400 Bad Request";
-		if (status_code == Forbidden)           return "403 Forbidden";
-		if (status_code == NotFound)            return "404 Not Found";
-		if (status_code == MethodNotAllowed)    return "405 Method Not Allowed";
-		if (status_code == RequestTimeout)      return "408 Request Timeout";
-		if (status_code == Conflict)            return "409 Conflict";
-		if (status_code == LengthRequired)      return "411 Length Required";
-		if (status_code == PayloadTooLarge)     return "413 Payload Too Large";
-		if (status_code == InternalServerError) return "500 Internal Server Error";
-		if (status_code == NotImplemented)      return "501 Not Implemented";
-		if (status_code == GatewayTimeOut)      return "504 Gateway TimeOut";
-		
+		if (methodString == "POST") return POST;
+		if (methodString == "GET") return GET;
+		if (methodString == "DELETE") return DELETE;
+		throw std::invalid_argument("unsupported HTTP method");
+	}
+
+	std::string Parser::mapStatusToString(StatusCode statusCode) {
+		Logger::debug("mapStatusToString");
+
+		if (statusCode == Continue)            return "100 Continue";
+		if (statusCode == Processing)          return "102 Processing";
+		if (statusCode == Ok)                  return "200 OK";
+		if (statusCode == Created)             return "201 Created";
+		if (statusCode == Accepted)            return "202 Accepted";
+		if (statusCode == NoContent)           return "204 No Content";
+		if (statusCode == MovedPermanently)    return "301 Moved Permanently";
+		if (statusCode == BadRequest)          return "400 Bad Request";
+		if (statusCode == Forbidden)           return "403 Forbidden";
+		if (statusCode == NotFound)            return "404 Not Found";
+		if (statusCode == MethodNotAllowed)    return "405 Method Not Allowed";
+		if (statusCode == RequestTimeout)      return "408 Request Timeout";
+		if (statusCode == Conflict)            return "409 Conflict";
+		if (statusCode == LengthRequired)      return "411 Length Required";
+		if (statusCode == PayloadTooLarge)     return "413 Payload Too Large";
+		if (statusCode == InternalServerError) return "500 Internal Server Error";
+		if (statusCode == NotImplemented)      return "501 Not Implemented";
+		if (statusCode == GatewayTimeOut)      return "504 Gateway TimeOut";
+
 		throw std::invalid_argument("unsupported status code");
-	}	
+	}

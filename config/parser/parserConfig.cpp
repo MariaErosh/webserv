@@ -22,9 +22,9 @@
 		ServerConfig    new_server;
 		std::vector<std::string>  result;
 
-		while (getline(configFile, data)) {  
+		while (getline(configFile, data)) {
 			if (data.empty())
-				continue;	
+				continue;
 			if (data == "server")
 				parseServerConfig(configFile, out);
 			else
@@ -45,10 +45,10 @@
 	void	ParserConfig::parseServerConfig(std::ifstream& configFile, Config &out) {
 		std::vector<std::string> 	result;
 		ServerConfig				newServer;
-		std::string					data;    
+		std::string					data;
 
 		while(getline(configFile, data)) {
-			result = String::splitStr(data);
+			result = String::splitByWhitespace(data);
 			int len = (int)result.size();
 			if (len ==0)
 				continue;
@@ -56,19 +56,19 @@
 				size_t colon_pos = result[1].find(':');
 
 				if (colon_pos != std::string::npos) {
-					newServer.ip_addr = result[1].substr(0, colon_pos);
+					newServer.ipAddress = result[1].substr(0, colon_pos);
 					newServer.port = result[1].substr(colon_pos + 1);
-				} 
+				}
 				else {
 					if (isNumeric(result[1]))
 						newServer.port = result[1];
 					else
-						newServer.ip_addr = result[1];
+						newServer.ipAddress = result[1];
 				}
 			}
-			else if (result[0] == "server_name" && len > 1) {
-				for (int i = 1; i < len; i++) 
-				newServer.server_name.push_back(result[i]);
+			else if (result[0] == "serverName" && len > 1) {
+				for (int i = 1; i < len; i++)
+				newServer.serverName.push_back(result[i]);
 			}
 			else if (result[0] == "max_body_size" && len == 2)
 				newServer.max_body_size = result[1];
@@ -87,12 +87,12 @@
 				throw WrongConfigException();
 			}
 		}
-		if (newServer.ip_addr == "" || newServer.ip_addr == "localhost")
-			newServer.ip_addr = "127.0.0.1";
+		if (newServer.ipAddress == "" || newServer.ipAddress == "localhost")
+			newServer.ipAddress = "127.0.0.1";
 		if (newServer.port == "")
 			newServer.port = "8080";
-		if (checkIp(newServer.ip_addr))
-			out.server_list.push_back(newServer);
+		if (checkIp(newServer.ipAddress))
+			out.serverConfigurations.push_back(newServer);
 		else
 			throw WrongIpAddress();
 	}
@@ -101,22 +101,22 @@
 	{
 		std::vector<std::string>	result;
 		ServerLocation				newLocation;
-		std::string					data;		
+		std::string					data;
 
 		if (path[0] != '/')
 			throw WrongConfigException();
 		newLocation.path = path;
-		
+
 		while(!conffile.eof()) {
 			getline(conffile, data);
 			if (data.size() == 0)
 				break;
-			result = String::splitStr(data);
+			result = String::splitByWhitespace(data);
 			int len = (int)result.size();
 			if (result[0] == "method" && len > 1) {
 				for (int i = 1; i < len; i++)
 					newLocation.method.push_back(result[i]);
-			}			
+			}
 			else if (result[0] == "index" && len == 2)
 				newLocation.index.push_back(result[1]);
 			else if (result[0] == "root" && len == 2) {
@@ -125,7 +125,7 @@
 				newLocation.root = result[1];
 			}
 			else if (result[0] == "autoindex" && len == 2) {
-				result[1] = String::toLower(result[1]);
+				result[1] = String::toLowercase(result[1]);
 				if (result[1] == "on")
 					newLocation.autoIndex = true;
 				else if (result[1] == "off")
@@ -135,13 +135,13 @@
 			}
 			else if (result[0] == "redirect" && len == 2)
 				newLocation.redirect = result[1];
-			else if (result[0] == "cgi_path" && len == 2)
-				newLocation.cgi_path = result[1];			
+			else if (result[0] == "cgiPath" && len == 2)
+				newLocation.cgiPath = result[1];
 			else if (result[0] == "location" && len == 2){
 				out.location_list.push_back(newLocation);
 				newLocation.path = result[1];
 				newLocation.root = "";
-				newLocation.cgi_path = "";
+				newLocation.cgiPath = "";
 				newLocation.redirect = "";
 				newLocation.autoIndex = false; //bad practice to show internal directory => by default - false
 				newLocation.method.clear();
@@ -159,7 +159,7 @@
 		std::vector<std::string> 	data;
 
 		int flag = 0;
-		data = String::split(ip_addr, '.');
+		data = String::tokenize(ip_addr, '.');
 		for (size_t i = 0; i < data.size(); i++) {
 			if (toInt(data[i]) == 255)
 				flag += 1;
@@ -187,5 +187,5 @@
 
 	const char	*ParserConfig::FileNotFoundException::what() const throw() {
 		return "Exception: could not open configuration file";
-	} 
+	}
 

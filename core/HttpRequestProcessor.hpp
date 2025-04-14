@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "../http/http.hpp"
@@ -26,7 +24,7 @@
 
 	private:
 
-		static const /**/ServerConfig*    locateServerBlock(const Request& req,
+		static const	ServerConfig*    locateServerBlock(const Request& req,
 																const std::string& ip,
 																const std::string& port,
 																const Config& settings);
@@ -50,8 +48,6 @@
 												const ServerConfig* server,
 												const ServerLocation* route);
 
-
-	/// Methods
 		static std::string      processGET(const std::string& resolvedPath,
 												const Request& req,
 												const ServerConfig* server,
@@ -65,8 +61,6 @@
 													const Request& req,
 													const ServerConfig* server);
 
-
-	/// Index
 		static std::string   resolveIndexRoute(const std::string& resolvedPath,
 														const Request& req,
 														const ServerLocation& route);
@@ -74,8 +68,6 @@
 		static std::string   generateAutoIndexView(const std::string& resolvedPath,
 													const Request& req);
 
-
-	/// Utils
 		static std::string  mapToAbsolutePath(const Request& req,
 											const ServerLocation* route);
 

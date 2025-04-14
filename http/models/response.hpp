@@ -8,13 +8,13 @@
 
 class Response {
 	public:
-		std::string   version;
-		StatusCode    status_code;
-		std::map<std::string, std::string>  headers;
+		std::string   protocolVersion;
+		StatusCode    statusCode;
+		std::map<std::string, std::string>  httpHeaders;
 		std::string body;
-				
-		Response() : version("HTTP/1.1") {}
-		Response(StatusCode status) : version("HTTP/1.1"), status_code(status) {}
+
+		Response() : protocolVersion("HTTP/1.1") {}
+		Response(StatusCode status) : protocolVersion("HTTP/1.1"), statusCode(status) {}
 };
 
 

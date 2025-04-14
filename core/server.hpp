@@ -20,72 +20,46 @@
 		Server& operator=(const Server&) { return *this; }
 
 	public:
-		// Server initialization.
-		void    init(const char* config_path);
+		void	configure(const char* configPath);
 
-		// Runs the server.
-		int     run(void);
+		int		run(void);
 
 	private:
-		// Init configuration file
-		void    initConfig(const char* config_path);
 
-		// Init connections (not servers) list with IP:Port pairs
-		void    initConnectionsSet(void);
-
-		// Init listening sockets
-		void    initSockets(void);
-
-		// Tells if the socket is a listening socket
-		bool  isListening(int socket) const;
-
-		/* Function for accepting client connection
-		*  Throws exception  when accept() fails
-		*/
-		int   acceptConnection(int listening_socket) const;
-
-		// Handler for client connections
-		void  handleConnection(int client_socket, fd_set& writefds);
-
-		// Handler for client disconnections
-		void  handleDisconnection(int client_socket);
-
-		// Recieve a message from a client
-		int   recvMsg(int socket_recv_from);
-
-		// Handle a message recieved from a client
-		int   handleMsg(std::string msg, int msg_owner);
-
-		// Send a message to a client
-		void  sendMsg(int socket_to_send, const char* msg, int msg_size) const;
-
-		// Close all listening sockets
-		void  closeListeningSockets() const;
+		void	loadConfig(const char* configPath);
+		void	initializeConnections(void);
+		void	initializeSockets(void);
+		bool	isListeningSocket(int socket) const;
+		int		acceptClient(int listeningSocket) const;
+		void	handleClient(int clientSocket, fd_set& writableSockets);
+		void	disconnectClient(int clientSocket);
+		int		receiveData(int socket);
+		int		processData(std::string message, int client);
+		void	sendData(int socket, const char* message, int messageSize) const;
+		void	closeSockets() const;
 
 	private:
-		const Config  conf_;
+		const Config  config_;
 
-
-		// Data struct of info about one connection, that can be used by different servers
 		struct ConnectionInfo {
-			std::string ip_addr;
+			std::string ipAddress;
 			std::string port;
 
 			ConnectionInfo() {}
 
-			ConnectionInfo(const std::string& ip_addr, const std::string& port)	: ip_addr(ip_addr), port(port){}
+			ConnectionInfo(const std::string& ipAddress, const std::string& port)	: ipAddress(ipAddress), port(port){}
 
 			bool operator<(const struct ConnectionInfo& second) const {
-				if (this->ip_addr == second.ip_addr)
+				if (this->ipAddress == second.ipAddress)
 				return (this->port < second.port);
-				return (this->ip_addr < second.ip_addr);
+				return (this->ipAddress < second.ipAddress);
 			}
 		};
 
-		fd_set                                      master_set_;        // master set of all sockets
-		std::set<struct ConnectionInfo>             connections_set_;   // list of connection infos
-		std::vector<int>                            listening_sockets_; // list of listening sockets
-		std::map<int, const struct ConnectionInfo*> socket_infos_;      // < socket to ConnectionInfo map
+		fd_set										masterSockets_;
+		std::set<struct ConnectionInfo>				connections_;
+		std::vector<int>							listeningSockets_;
+		std::map<int, const struct ConnectionInfo*>	socketToConnection_;
 
-  };
+};
 

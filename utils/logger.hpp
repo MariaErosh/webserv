@@ -4,52 +4,39 @@
 #include <iostream>
 #include <fstream>
 #include <sys/types.h>
- 
+
 
 	class Logger {
 		public:
 			enum LogLevel
 			{
-				LOGLEV_ERROR = 0,
-				LOGLEV_INFO,
-				LOGLEV_DEBUG
+				LOG_ERROR = 0,
+				LOG_INFO,
+				LOG_DEBUG
 			};
 
 		private:
-			static const bool         timestamp_enabled_  = true;
-			static const int          prompt_max_width_   = 5;		
-			static const bool         duplicate_to_file_ = true;
-			static LogLevel           minimum_log_level_;
-			static const std::string  logs_directory_;
-			static std::ofstream      output_fstream_;
+			static const bool         enableTimestamp_  = true;
+			static const int          maxPromptWidth_   = 5;
+			static const bool         logToFile_ = true;
+			static LogLevel           currentLogLevel_;
+			static const std::string  logDirectory_;
+			static std::ofstream      logFileStream_;
 
-			/*  The function logs a message to a given output stream (os), optionally with a timestamp, 
-				a custom prompt label (like "INFO" or "ERROR"), and optional ANSI color codes for terminal coloring.
-			*/
+
 			static void log(const std::string& message, std::ostream& os,const char *prompt = "LOG", const char *colors = NULL);
-			
 			Logger();
 			Logger(Logger& other);
 			Logger &operator=(const Logger& other);
 			~Logger();
-		
+
 
 		public:
 			static Logger instance_;
 
-			/* Initialization of Logger.
-				min_log_level    Minimum level for logging (LOGLEV_ERROR, LOGLEV_INFO or LOGLEV_DEBUG)
-				dupl_to_file_   Creates log file if true, or use console output only otherwise.			
-			*/
-			static void init(LogLevel min_log_level = LOGLEV_INFO, bool dupl_to_file = true);		
-
-			// Print info message to stdout.
-			static void info(const std::string& message);
-
-			// Print debug message to stdout.
+			static void initialize(LogLevel minLogLevel = LOG_INFO, bool writeToLogFile = true);
+			static void logInfo(const std::string& message);
 			static void debug(const std::string& message);
-
-			// Print error message to stderr. status_code - status to return from function
 			static int  error(const std::string& message, int status_code = -1);
 	};
 

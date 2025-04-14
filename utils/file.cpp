@@ -32,15 +32,15 @@
 
 	std::string File::readFile(const char *filename)
 	{
-		std::string absolute_path;
+		std::string absolutePath;
 		if (filename[0] != '/')
-		absolute_path = File::getCurrDir() + "/" + std::string(filename);
+		absolutePath = File::getCurrDir() + "/" + std::string(filename);
 		else
-		absolute_path = std::string(filename);
+		absolutePath = std::string(filename);
 
 
-		Logger::debug(absolute_path);
-		std::ifstream file(absolute_path.c_str());
+		Logger::debug(absolutePath);
+		std::ifstream file(absolutePath.c_str());
 
 		if (!file.is_open())
 		throw Exceptions::FileDoesNotExist();
@@ -55,20 +55,20 @@
 
 	void  File::createPath(const char* path, mode_t mode) {
 
-		char *copy_path = strdup(path);
-		char *sbegin_ptr = copy_path;
-		char *send_ptr = NULL;
+		char *copyPath = strdup(path);
+		char *segmentStart = copyPath;
+		char *segmentEnd = NULL;
 
-		while ((send_ptr = strchr(sbegin_ptr, '/')) != 0) {
-			if (sbegin_ptr != send_ptr)	{
-				*send_ptr = '\0';
-				File::createDir(copy_path, mode);
-				*send_ptr = '/';
+		while ((segmentEnd = strchr(segmentStart, '/')) != 0) {
+			if (segmentStart != segmentEnd) {
+				*segmentEnd = '\0';
+				File::createDir(copyPath, mode);
+				*segmentEnd = '/';
 			}
-			sbegin_ptr = send_ptr + 1;
+			segmentStart = segmentEnd + 1;
 		}
-		File::createDir(copy_path, mode);
-		free(copy_path);
+		File::createDir(copyPath, mode);
+		free(copyPath);
 	}
 
 	void  File::createDir(const char* dir, mode_t mode) {
@@ -86,21 +86,21 @@
 	bool	File::isFile(const char *path) {
 		struct stat st;
 
-		if (stat(path, &st) != 0) // case when file doesn't exists
+		if (stat(path, &st) != 0)
 			return false;
 		return S_ISREG(st.st_mode) != 0;
 	}
 
 	bool	File::isDir(const char *path) {
 		struct stat st;
-		if (stat(path, &st) != 0 || S_ISREG(st.st_mode)) // case when dir doesn't exists or is a file
+		if (stat(path, &st) != 0 || S_ISREG(st.st_mode))
 			return false;
 		return S_ISDIR(st.st_mode) != 0;
-	}	
+	}
 
 	bool	File::pathExists(const char *path) {
 		struct stat st;
 		return (stat(path, &st) == 0);
-	}	
-  
+	}
+
 

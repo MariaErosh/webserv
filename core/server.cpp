@@ -16,261 +16,223 @@
 
 	Server  Server::instance_;
 
-	void  Server::init(const char* config_path) {
-		this->initConfig(config_path);
-		this->initConnectionsSet();
-		this->initSockets();
+	void	Server::configure(const char* configPath) {
+		this->loadConfig(configPath);
+		this->initializeConnections();
+		this->initializeSockets();
 	}
 
 
-	void	Server::initConfig(const char* config_path) {
-			ParserConfig::parseFile(config_path, const_cast<Config&>(this->conf_));
+	void	Server::loadConfig(const char* configPath) {
+			ParserConfig::parseFile(configPath, const_cast<Config&>(this->config_));
 	}
 
-	void    Server::initConnectionsSet(void) {
-		for (size_t i = 0; i < this->conf_.server_list.size(); ++i) {
-		this->connections_set_.insert(Server::ConnectionInfo(
-										this->conf_.server_list[i].ip_addr,
-										this->conf_.server_list[i].port)
+
+	void	Server::initializeConnections(void) {
+		for (size_t i = 0; i < this->config_.serverConfigurations.size(); ++i) {
+		this->connections_.insert(Server::ConnectionInfo(
+										this->config_.serverConfigurations[i].ipAddress,
+										this->config_.serverConfigurations[i].port)
 										);
 		}
 	}
 
-	void    Server::initSockets(void) {
-		FD_ZERO(&master_set_);
 
-		this->listening_sockets_.reserve(conf_.server_list.size());
+	void	Server::initializeSockets(void) {
+		FD_ZERO(&masterSockets_);
 
-		std::set<Server::ConnectionInfo>::const_iterator it;
-		for (it = this->connections_set_.begin(); it != this->connections_set_.end(); ++it)
+		this->listeningSockets_.reserve(config_.serverConfigurations.size());
+
+		std::set<Server::ConnectionInfo>::const_iterator connectionIterator;
+		for (connectionIterator = this->connections_.begin(); connectionIterator != this->connections_.end(); ++connectionIterator)
 		{
-		// create socket
-		this->listening_sockets_.push_back(socket(AF_INET, SOCK_STREAM, 0));
-		if ((this->listening_sockets_.back()) == -1)
-			throw std::runtime_error("Can't create a listening socket(): " + std::string(strerror(errno)));
+		this->listeningSockets_.push_back(socket(AF_INET, SOCK_STREAM, 0));
+		if ((this->listeningSockets_.back()) == -1)
+			throw std::runtime_error("Failed to create a listening socket: " + std::string(strerror(errno)));
 
-
-		// set options
-		int enable = 1;
+		int reuseOption = 1;
 		if (setsockopt(
-			this->listening_sockets_.back(),
+			this->listeningSockets_.back(),
 			SOL_SOCKET,
 			SO_REUSEADDR,
-			&enable,
+			&reuseOption,
 			sizeof(int)) == -1
 			)
 			throw std::runtime_error("Can't setsockopt() at listening socket: " + std::string(strerror(errno)));
 
+		sockaddr_in socketAddress;
+		std::memset(&socketAddress, 0, sizeof(socketAddress));
 
-		// bind socket to ip:port and listen
-		sockaddr_in hint;
-		std::memset(&hint, 0, sizeof(hint));
+		socketAddress.sin_family = AF_INET;
 
-		hint.sin_family = AF_INET;
+		uint16_t portNumber = atoi(connectionIterator->port.c_str());
+		socketAddress.sin_port = htons(portNumber);
 
-		uint16_t tmp_port = atoi(it->port.c_str()); //remove
-		hint.sin_port = htons(tmp_port);
+		if ((socketAddress.sin_addr.s_addr = inet_addr(connectionIterator->ipAddress.c_str())) == INADDR_NONE)
+			throw std::runtime_error("Non valid ipAddress: " + std::string(strerror(errno)));
 
-		if ((hint.sin_addr.s_addr = inet_addr(it->ip_addr.c_str())) == INADDR_NONE)
-			throw std::runtime_error("Non valid ip_addr: " + std::string(strerror(errno)));
-
-		if (bind(this->listening_sockets_.back(), (sockaddr *)&hint, sizeof(hint)) == -1)
+		if (bind(this->listeningSockets_.back(), (sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
 		{
 			throw std::runtime_error("Can't bind() the socket: " + std::string(strerror(errno)));
 		}
 
-		if (listen(this->listening_sockets_.back(), SOMAXCONN) == -1)
+		if (listen(this->listeningSockets_.back(), SOMAXCONN) == -1)
 			throw std::runtime_error("Can't listen() the socket: " + std::string(strerror(errno)));
 
+		FD_SET(this->listeningSockets_.back(), &masterSockets_);
 
-		// set up FD
-		FD_SET(this->listening_sockets_.back(), &master_set_);
-
-
-		// fill socket info to the map
-		socket_infos_.insert(std::make_pair(
-			this->listening_sockets_.back(),
-			&(*it)
-		));
+		socketToConnection_.insert(std::make_pair(
+			this->listeningSockets_.back(),
+			&(*connectionIterator)));
 		}
-  	}
+}
 
 
 	int Server::run() {
-		std::stringstream ss;
-		fd_set            readfds;
-		fd_set            writefds;
-		int               new_client_socket;
+		fd_set				activeReadSockets;
+		fd_set				activeWriteSockets;
+		int					clientSocket;
 
 		while (true) {
-		/// copy masterset
-		readfds = master_set_;
-		writefds = master_set_;
+		activeReadSockets = masterSockets_;
+		activeWriteSockets = masterSockets_;
 
-		/// select
-		if (select(FD_SETSIZE, &readfds, &writefds, NULL, NULL) == -1)
+		if (select(FD_SETSIZE, &activeReadSockets, &activeWriteSockets, NULL, NULL) == -1)
 			throw std::runtime_error("Can't select() fdsets: " + std::string(strerror(errno)));
 
-		/// check if any socket has changed
-		for (int socket = 0; socket < FD_SETSIZE; socket++) {// add tracking for max socket for replacing FD_SETSIZE
-			if (FD_ISSET(socket, &readfds)) {
-			if (isListening(socket)) {
-				// accept
-				new_client_socket = acceptConnection(socket);
-
-				// duplicate connection info
-				socket_infos_[new_client_socket] = socket_infos_[socket];
-
-				// add to set
-				FD_SET(new_client_socket, &master_set_);
+		for (int socket = 0; socket < FD_SETSIZE; socket++) {
+			if (FD_ISSET(socket, &activeReadSockets)) {
+			if (isListeningSocket(socket)) {
+				clientSocket = acceptClient(socket);
+				socketToConnection_[clientSocket] = socketToConnection_[socket];
+				FD_SET(clientSocket, &masterSockets_);
 			} else {
-				// handle clients connection
-				handleConnection(socket, writefds);
+				handleClient(socket, activeWriteSockets);
 			}
 			}
 		}
-		//usleep(100); // because too hot... // remove!
 		}
-		/// clean up
-		closeListeningSockets();
+		closeSockets();
 	}
 
 
-	//  Connections
-	bool  Server::isListening(int socket) const {
-		return Containers::contains(this->listening_sockets_, socket);
+	bool  Server::isListeningSocket(int socket) const {
+		return Containers::contains(this->listeningSockets_, socket);
 	}
 
-	int  Server::acceptConnection(int listening_socket) const {
-		std::stringstream ss;
-		std::stringstream ss1;
-		sockaddr_in       client;
-		socklen_t         client_size = sizeof(client);
-		int               new_client_socket;
 
-		if ((new_client_socket = accept(listening_socket, (sockaddr *)&client, &client_size)) == -1)
+	int  Server::acceptClient(int listeningSocket) const {
+		std::stringstream	logMessage;
+		std::stringstream	debugMessage;
+		sockaddr_in			clientAddress;
+		socklen_t			clientAddressSize = sizeof(clientAddress);
+		int					clientSocket;
+
+		if ((clientSocket = accept(listeningSocket, (sockaddr *)&clientAddress, &clientAddressSize)) == -1)
 		throw std::runtime_error("Can't accept() the client: " + std::string(strerror(errno)));
-		ss << "Client #" << new_client_socket << " has been accepted";
-		Logger::instance_.info(ss.str());
+		logMessage << "Client #" << clientSocket << " has been accepted";
+		Logger::instance_.logInfo(logMessage.str());
 
-		ss1 << "Client #" << new_client_socket << ": " << inet_ntoa(client.sin_addr) << ":" << htons(client.sin_port); // remove!
-		Logger::instance_.debug(ss1.str());
+		debugMessage << "Client #" << clientSocket << ": " << inet_ntoa(clientAddress.sin_addr) << ":" << htons(clientAddress.sin_port);
+		Logger::instance_.debug(debugMessage.str());
 
-		return new_client_socket;
+		return clientSocket;
 	}
 
-		void  Server::handleConnection(int client_socket, fd_set& writefds) {
-			if (recvMsg(client_socket) != CLIENT_DISCONNECTED && FD_ISSET(client_socket, &writefds)) {
-			// sendMsg(client_socket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
+		void  Server::handleClient(int clientSocket, fd_set& writableSockets) {
+			if (receiveData(clientSocket) != CLIENT_DISCONNECTED && FD_ISSET(clientSocket, &writableSockets)) {
+			sendData(clientSocket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
 			}
 		}
 
-		void	Server::handleDisconnection(int client_socket) {
-			std::stringstream ss;
+		void	Server::disconnectClient(int clientSocket) {
+			std::stringstream logMessage;
 
-			if (close(client_socket) == -1)
+			if (close(clientSocket) == -1)
 				throw std::runtime_error("Can't close() the client's connection: " + std::string(strerror(errno)));
-			FD_CLR(client_socket, &master_set_);
-			ss << "Client #" << client_socket << " has disconnected";
-			Logger::instance_.info(ss.str());
+			FD_CLR(clientSocket, &masterSockets_);
+			logMessage << "Client #" << clientSocket << " has disconnected";
+			Logger::instance_.logInfo(logMessage.str());
 		}
 
 
-		//  Recieve and send
-		int	Server::handleMsg(std::string msg, int socket_recv_from) {
+		int	Server::processData(std::string message, int client) {
 			static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
 
-			Logger::debug("#" + String::to_string(socket_recv_from) + "Recieved: " + msg); // < DEBUG
+			Logger::debug("#" + String::convertToString(client) + "Recieved: " + message);
 
 			// get connection info
-			const Server::ConnectionInfo* info = socket_infos_.at(socket_recv_from);
+			const Server::ConnectionInfo* info = socketToConnection_.at(client);
 
 			// make response
 			int connection_status = 1; //unexisting status for valgrind
-			//std::cout << "sock:" << socket_recv_from << std::endl;
+			//std::cout << "sock:" << client << std::endl;
 
 			//Check that msg is is finished(has \r\n\r\n). If not-> continue
-			if (msg.find("\r\n\r\n") == std::string::npos) {
-				socket_to_pending_request[socket_recv_from] += msg;
-				if (socket_to_pending_request[socket_recv_from].find("\r\n\r\n") != std::string::npos ) {
-					msg = socket_to_pending_request[socket_recv_from];
-					socket_to_pending_request[socket_recv_from].clear();
+			if (message.find("\r\n\r\n") == std::string::npos) {
+				socket_to_pending_request[client] += message;
+				if (socket_to_pending_request[client].find("\r\n\r\n") != std::string::npos ) {
+					message = socket_to_pending_request[client];
+					socket_to_pending_request[client].clear();
 				}
 				else
 					return CONNECTION_CONTINUE;
 			}
 			else {
-				if (!socket_to_pending_request[socket_recv_from].empty()) {
-					msg = socket_to_pending_request[socket_recv_from] + msg;
-					socket_to_pending_request[socket_recv_from].clear();
+				if (!socket_to_pending_request[client].empty()) {
+					message = socket_to_pending_request[client] + message;
+					socket_to_pending_request[client].clear();
 				}
 			}
 
 			std::string response = HttpRequestProcessor::handleClientInput (
-				msg,
-				info->ip_addr,
+				message,
+				info->ipAddress,
 				info->port,
-				this->conf_,
+				this->config_,
 				connection_status
 			);
 
-			// send response
 			Logger::instance_.debug("SENDING RESPONSE");
 			Logger::instance_.debug("{" + response + "}");
 
-			sendMsg(socket_recv_from, response.c_str(), response.size());
+			sendData(client, response.c_str(), response.size());
 
 			Logger::instance_.debug("RESPONSE HAS BEEN SENDED");
 
 			if (connection_status == CONNECTION_TERMINATE){
-				handleDisconnection(socket_recv_from);
+				disconnectClient(client);
 				return CLIENT_DISCONNECTED;
 			}
 			return CONNECTION_CONTINUE;
 		}
 
-		int	Server::recvMsg(int socket_recv_from) {
-			std::string       request;
-			char              buffer[4096]; // max_body_size + header
-			int               ret_bytes;
+		int	Server::receiveData(int socket) {
+			std::string			receivedData;
+			char				dataBuffer[4096];
+			int					bytesRead;
 
-			// recieve
-			//std::memset(buffer, 0, sizeof(buffer));
-			while ((ret_bytes = recv(socket_recv_from, buffer, sizeof(buffer) - 1, MSG_DONTWAIT)) > 0) {
-				//request += buffer;
-				request.append(buffer, ret_bytes);
-				//std::memset(buffer, 0, sizeof(buffer));
+			while ((bytesRead = recv(socket, dataBuffer, sizeof(dataBuffer) - 1, MSG_DONTWAIT)) > 0) {
+				receivedData.append(dataBuffer, bytesRead);
 			}
-
-			// handle
-			/*switch (ret_bytes) {
-			case 0: {
-				handleDisconnection(socket_recv_from);
-				return CLIENT_DISCONNECTED;
-			}
-			default: {
-				return handleMsg(request, socket_recv_from); // if any errors -> disconnect
-			}
-			}*/
-			if (ret_bytes == 0) {
-				handleDisconnection(socket_recv_from);
+			if (bytesRead == 0) {
+				disconnectClient(socket);
 				return CLIENT_DISCONNECTED;
 			}
 			else {
-				return handleMsg(request, socket_recv_from); // if any errors -> disconnect
+				return processData(receivedData, socket);
 			}
-
 		}
 
-		void	Server::sendMsg(int socket_to_send, const char* msg, int msg_size) const {
-			int ret;
-			if ((ret = send(socket_to_send, msg, msg_size, 0)) == -1)
-				throw std::runtime_error("Can't send() message to the client: " + std::string(strerror(errno))); // It's a regular error, not an exception
+		void	Server::sendData(int socket, const char* message, int messageSize) const {
+			int result;
+			if ((result = send(socket, message, messageSize, 0)) == -1)
+				throw std::runtime_error("Can't send() message to the client: " + std::string(strerror(errno)));
 		}
 
-		void	Server::closeListeningSockets() const {
-			for (size_t i = 0; i < conf_.server_list.size() ; i++) {
-				if (close(listening_sockets_[i]) == -1)
+		void	Server::closeSockets() const {
+			for (size_t i = 0; i < config_.serverConfigurations.size() ; i++) {
+				if (close(listeningSockets_[i]) == -1)
 					throw std::runtime_error("Can't close a listening socket: " + std::string(strerror(errno)));
 			}
 		}

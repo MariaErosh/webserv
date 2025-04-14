@@ -8,10 +8,10 @@
 class Request {
 	public:
 		Method	method;
-		std::string		uri;
-		std::string		version;
+		std::string		resourcePath;
+		std::string		protocolVersion;
 
-		std::map<std::string, std::string>  headers;
+		std::map<std::string, std::string>  httpHeaders;
 		std::string body;
 };
 

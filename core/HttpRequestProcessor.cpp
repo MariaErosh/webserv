@@ -4,8 +4,8 @@
 #include "../utils/string.hpp"
 #include "../utils/exceptions.hpp"
 #include "../core/server.hpp"
-#include "./pagegenerator.hpp"
-#include "../cgi/cgi.hpp"
+#include "./pageRenderer.hpp"
+#include "../cgi/cgiHandler.hpp"
 #include <algorithm>
 #include <unistd.h>
 #include <exception>
@@ -23,16 +23,16 @@ std::string HttpRequestProcessor::handleClientInput(const std::string& rawPayloa
 	std::string outgoingResponse;
 
 	try {
-		incomingRequest = Parser::deserializeRequest(rawPayload);
+		incomingRequest = Parser::parseHttpRequest(rawPayload);
 
-		if (incomingRequest.headers.find("Connection") != incomingRequest.headers.end()) {
-			if (incomingRequest.headers.at("Connection") == "close")
+		if (incomingRequest.httpHeaders.find("Connection") != incomingRequest.httpHeaders.end()) {
+			if (incomingRequest.httpHeaders.at("Connection") == "close")
 				sessionState = CONNECTION_TERMINATE;
 			else
 				sessionState = CONNECTION_CONTINUE;
 			}
 
-		if (settings.server_list.empty()) {
+		if (settings.serverConfigurations.empty()) {
 			outgoingResponse = HttpRequestProcessor::produceFallbackPage();
 		} else {
 			serverMatch = HttpRequestProcessor::locateServerBlock(incomingRequest, sourceIp, sourcePort, settings);
@@ -59,12 +59,12 @@ const ServerConfig*	HttpRequestProcessor::locateServerBlock(const Request& req,
 	Logger::debug("HttpRequestProcessor::locateServerBlock");
 	const ServerConfig* backupServer = NULL;
 
-	for (size_t index = 0; index < settings.server_list.size(); ++index) {
-		const ServerConfig& currentServer = settings.server_list[index];
-		if (currentServer.ip_addr == ip && currentServer.port == port) {
-			const std::string& hostHeader = req.headers.at("Host");
-			for (size_t alias = 0; alias < currentServer.server_name.size(); ++alias) {
-				if (currentServer.server_name[alias] + ":" + currentServer.port == hostHeader)
+	for (size_t index = 0; index < settings.serverConfigurations.size(); ++index) {
+		const ServerConfig& currentServer = settings.serverConfigurations[index];
+		if (currentServer.ipAddress == ip && currentServer.port == port) {
+			const std::string& hostHeader = req.httpHeaders.at("Host");
+			for (size_t alias = 0; alias < currentServer.serverName.size(); ++alias) {
+				if (currentServer.serverName[alias] + ":" + currentServer.port == hostHeader)
 					return &currentServer;
 			}
 			if (!backupServer)
@@ -84,10 +84,10 @@ const ServerLocation* HttpRequestProcessor::locateRoutePath(const Request& req,
 	for (size_t i = 0; i < serverBlock.location_list.size(); ++i) {
 		const ServerLocation& candidateRoute = serverBlock.location_list[i];
 
-		if (req.uri == candidateRoute.path)
+		if (req.resourcePath == candidateRoute.path)
 			return &candidateRoute;
 
-		if (req.uri.find(candidateRoute.path) == 0 && candidateRoute.path.size() > matchedLength) {
+		if (req.resourcePath.find(candidateRoute.path) == 0 && candidateRoute.path.size() > matchedLength) {
 			bestRoute = &candidateRoute;
 			matchedLength = candidateRoute.path.size();
 		}
@@ -105,7 +105,7 @@ std::string	HttpRequestProcessor::craftHttpReply(const Request& req,
 			return HttpRequestProcessor::craftErrorReply(MethodNotAllowed, req, server);
 		if (!route->redirect.empty())
 			return HttpRequestProcessor::redirectClient(route->redirect);
-		if (!route->cgi_path.empty())
+		if (!route->cgiPath.empty())
 			return HttpRequestProcessor::executeCGIScript(req, server, route);
 		}
 
@@ -125,9 +125,9 @@ std::string	HttpRequestProcessor::craftHttpReply(const Request& req,
 std::string	HttpRequestProcessor::produceFallbackPage() {
 	Logger::debug("HttpRequestProcessor::produceFallbackPage");
 	Response  defaultReply(Ok);
-	defaultReply.body = PageGenerator::generateDefaultPage();
-	defaultReply.headers.insert(std::make_pair("Content-Type", "text/html"));
-	return Parser::serializeResponse(defaultReply);
+	defaultReply.body = PageRenderer::renderDefaultPage();
+	defaultReply.httpHeaders.insert(std::make_pair("Content-Type", "text/html"));
+	return Parser::createHttpResponse(defaultReply);
 }
 
 std::string	HttpRequestProcessor::craftErrorReply(StatusCode errorCode,
@@ -135,7 +135,7 @@ std::string	HttpRequestProcessor::craftErrorReply(StatusCode errorCode,
 												const ServerConfig* server) {
 	Logger::debug("HttpRequestProcessor::craftErrorReply");
 	try {
-		Logger::error(req.headers.at("Host") + req.uri + ": " + Parser::statusToString(errorCode));
+		Logger::error(req.httpHeaders.at("Host") + req.resourcePath + ": " + Parser::mapStatusToString(errorCode));
 	}
 	catch(...) {
 		Logger::error("Unknown error while logging.");
@@ -144,20 +144,20 @@ std::string	HttpRequestProcessor::craftErrorReply(StatusCode errorCode,
 	Response  errorReply(errorCode);
 
 	if (server && server->error_page.find(errorCode) != server->error_page.end()) {
-		errorReply.body = PageGenerator::generateErrorPage(
+		errorReply.body = PageRenderer::renderErrorPage(
 		server->error_page.at(errorCode).c_str());
 	}
 	else {
-		errorReply.body = PageGenerator::generateErrorPage(errorReply.status_code);
+		errorReply.body = PageRenderer::renderErrorPage(errorReply.statusCode);
 	}
 
-	return Parser::serializeResponse(errorReply);
+	return Parser::createHttpResponse(errorReply);
 }
 
 std::string	HttpRequestProcessor::redirectClient(const std::string& targetUrl) {
 	Response  redirectReply(MovedPermanently);
-	redirectReply.headers.insert(std::make_pair("Location", targetUrl));
-	return Parser::serializeResponse(redirectReply);
+	redirectReply.httpHeaders.insert(std::make_pair("Location", targetUrl));
+	return Parser::createHttpResponse(redirectReply);
 }
 
 std::string	HttpRequestProcessor::executeCGIScript(const Request& req,
@@ -168,10 +168,10 @@ std::string	HttpRequestProcessor::executeCGIScript(const Request& req,
 
 	std::string scriptPath;
 
-	if (route->cgi_path[0] != '/')
-		scriptPath = File::getCurrDir() + '/' + route->cgi_path;
+	if (route->cgiPath[0] != '/')
+		scriptPath = File::getCurrDir() + '/' + route->cgiPath;
 	else
-		scriptPath = route->cgi_path;
+		scriptPath = route->cgiPath;
 
 	Logger::debug("CGI Script Path:" + scriptPath);
 
@@ -180,15 +180,15 @@ std::string	HttpRequestProcessor::executeCGIScript(const Request& req,
 
 	std::string scriptOutput;
 	try {
-		scriptOutput = Handler::instance_.exec(scriptPath, req, *server);
-		Logger::info("{" + scriptOutput + "}");
-	} catch (Handler::GatewayTimeoutException& timeoutErr) {
+		scriptOutput = CgiHandler::instance_.runScript(scriptPath, req, *server);
+		Logger::logInfo("{" + scriptOutput + "}");
+	} catch (CgiHandler::GatewayTimeoutException& timeoutErr) {
 		return HttpRequestProcessor::craftErrorReply(GatewayTimeOut, req, server);
 	}
 
 	Response  finalResponse(Ok);
 
-	return Parser::serializeResponse(finalResponse, false) + scriptOutput;
+	return Parser::createHttpResponse(finalResponse, false) + scriptOutput;
 }
 
 std::string	HttpRequestProcessor::processGET(const std::string& resolvedPath,
@@ -219,9 +219,9 @@ std::string	HttpRequestProcessor::processGET(const std::string& resolvedPath,
 	}
 	Response fileResponse(Ok);
 	fileResponse.body = fileContent;
-	fileResponse.headers.insert(std::make_pair("Content-Type",HttpRequestProcessor::inferMimeType(resolvedPath)));
+	fileResponse.httpHeaders.insert(std::make_pair("Content-Type",HttpRequestProcessor::inferMimeType(resolvedPath)));
 
-	return Parser::serializeResponse(fileResponse);
+	return Parser::createHttpResponse(fileResponse);
 }
 
 std::string	HttpRequestProcessor::processPOST(const std::string& resolvedPath,
@@ -239,14 +239,14 @@ std::string	HttpRequestProcessor::processPOST(const std::string& resolvedPath,
 
 	if (File::pathExists(resolvedPath.c_str())){
 		File::writeFile(req.body, resolvedPath.c_str(), true);
-		uploadReply.status_code = NoContent;
+		uploadReply.statusCode = NoContent;
 	}
 	else {
 		File::writeFile(req.body, resolvedPath.c_str());
-		uploadReply.status_code = Created;
+		uploadReply.statusCode = Created;
 	}
 
-	return Parser::serializeResponse(uploadReply);
+	return Parser::createHttpResponse(uploadReply);
 }
 
 
@@ -265,12 +265,12 @@ std::string	HttpRequestProcessor::processDELETE(const std::string& resolvedPath,
 	std::string data = File::readFile(resolvedPath.c_str());
 	::unlink(resolvedPath.c_str());
 
-	deleteReply.status_code = Ok;
+	deleteReply.statusCode = Ok;
 	deleteReply.body = data;
 
-	deleteReply.headers.insert(std::make_pair("Content-Type", HttpRequestProcessor::inferMimeType(resolvedPath)));
+	deleteReply.httpHeaders.insert(std::make_pair("Content-Type", HttpRequestProcessor::inferMimeType(resolvedPath)));
 
-	return Parser::serializeResponse(deleteReply);
+	return Parser::createHttpResponse(deleteReply);
 }
 
 std::string	HttpRequestProcessor::resolveIndexRoute(const std::string& resolvedPath,
@@ -292,9 +292,9 @@ std::string	HttpRequestProcessor::resolveIndexRoute(const std::string& resolvedP
 
 	Response indexReply(Ok);
 	indexReply.body = File::readFile((resolvedPath + route.index[foundIdx]).c_str());
-	indexReply.headers.insert(std::make_pair("Content-Type", HttpRequestProcessor::inferMimeType(route.index[foundIdx])));
+	indexReply.httpHeaders.insert(std::make_pair("Content-Type", HttpRequestProcessor::inferMimeType(route.index[foundIdx])));
 
-	return Parser::serializeResponse(indexReply);
+	return Parser::createHttpResponse(indexReply);
 }
 
 
@@ -302,10 +302,10 @@ std::string	HttpRequestProcessor::generateAutoIndexView(const std::string& resol
 															const Request& req) {
 	Logger::debug("HttpRequestProcessor::generateAutoIndexView");
 	Response autoIndexReply(Ok);
-	autoIndexReply.body = PageGenerator::generateIndexPage(resolvedPath, req.uri);
-	autoIndexReply.headers.insert(std::make_pair("Content-Type", "text/html"));
+	autoIndexReply.body = PageRenderer::renderDirectoryIndex(resolvedPath, req.resourcePath);
+	autoIndexReply.httpHeaders.insert(std::make_pair("Content-Type", "text/html"));
 
-	return Parser::serializeResponse(autoIndexReply);
+	return Parser::createHttpResponse(autoIndexReply);
 }
 
 std::string HttpRequestProcessor::mapToAbsolutePath(const Request& req,
@@ -317,8 +317,8 @@ std::string HttpRequestProcessor::mapToAbsolutePath(const Request& req,
 		if (route->root[0] != '/')
 		rootPrefix = File::getCurrDir() + "/" + route->root;
 		rootPrefix = route->root;
-		std::string relativeUri = req.uri;
-		if (!File::pathExists((rootPrefix + req.uri).c_str()))
+		std::string relativeUri = req.resourcePath;
+		if (!File::pathExists((rootPrefix + req.resourcePath).c_str()))
 		relativeUri.erase(0, route->path.size());
 
 		std::string completePath = rootPrefix + relativeUri;
@@ -328,7 +328,7 @@ std::string HttpRequestProcessor::mapToAbsolutePath(const Request& req,
 		Logger::debug("HttpRequestProcessor::mapToAbsolutePath = " + completePath);
 		return completePath;
 	}
-	std::string	completePath2 = File::getCurrDir() + req.uri;
+	std::string	completePath2 = File::getCurrDir() + req.resourcePath;
 	Logger::debug("HttpRequestProcessor::mapToAbsolutePath = " + completePath2);
 	return (completePath2);
 }
@@ -341,7 +341,7 @@ bool	HttpRequestProcessor::isRequestPermitted(const Request& req, const ServerLo
 		return true;
 
 	return (std::find(route.method.begin(), route.method.end(),
-	Parser::methodToString(req.method)) != route.method.end());
+	Parser::mapMethodToString(req.method)) != route.method.end());
 }
 
 
@@ -352,7 +352,7 @@ std::string HttpRequestProcessor::inferMimeType(const std::string& fileExt) {
 	if (dotIndex == std::string::npos) {
 		return "text/plain";
 	}
-	std::string ext = String::toLower(fileExt.substr(dotIndex));
+	std::string ext = String::toLowercase(fileExt.substr(dotIndex));
 
 	if (ext == ".html") return "text/html";
 	if (ext == ".css")  return "text/css";

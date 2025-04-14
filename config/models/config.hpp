@@ -2,7 +2,7 @@
 #include "./serverConfig.hpp"
 
 struct Config {
-    std::vector<ServerConfig> server_list;
-  }; 
+    std::vector<ServerConfig> serverConfigurations;
+  };
 
 

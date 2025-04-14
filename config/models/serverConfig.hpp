@@ -5,11 +5,11 @@
 #include <string>
 
 struct ServerConfig {
-	std::vector<std::string>				server_name;
-	std::string								ip_addr;
+	std::vector<std::string>				serverName;
+	std::string								ipAddress;
 	std::string								port;
-	std::string								max_body_size;		
-	std::map<StatusCode, std::string>	error_page;		
+	std::string								max_body_size;
+	std::map<StatusCode, std::string>		error_page;
 	std::vector<ServerLocation>				location_list;
 };
 
