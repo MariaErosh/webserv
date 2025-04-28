@@ -81,9 +81,6 @@
 		int inputFd = fileno(input);
 		int outputFd = fileno(output);
 		Logger::debug("CgiHandler::executeScript : write to input");
-		if (requestBody.size() == 0){
-			return "";
-		}
 		int r = write(inputFd, requestBody.c_str(), requestBody.size());
 		if (r<0) {
 			Logger::error("WRITE ERROR");
@@ -103,9 +100,9 @@
 			char * const * null = NULL;
 			dup2(inputFd, STDIN_FILENO);
 			dup2(outputFd, STDOUT_FILENO);
-			if (execve(requestBody.c_str(), null, env) < 0) {
+			if (execve(scriptPath.c_str(), null, env) < 0) {
 				Logger::error("EXECVE " + scriptPath + " WAS FAILED");
-				exit(-1);
+				exit(127);
 			}
 		}
 		else {
@@ -117,8 +114,34 @@
 			time_t startTime = time(NULL);
 			while (true) {
 				pid_t result = waitpid(pid, &status, WNOHANG);
-				if (result == pid)
+				if (result == pid){
+					 
+					 if (WIFEXITED(status)) {
+						int exitCode = WEXITSTATUS(status);
+						if (exitCode != 0) {
+							Logger::error("CGI script exited with error");
+							fclose(output);
+							close(inputFd);
+							close(outputFd);
+							for (size_t i = 0; env[i]; i++)
+								delete[] env[i];
+							delete[] env;
+							throw std::runtime_error("CGI script execution failed");
+						}
+					} else if (WIFSIGNALED(status)) {
+						
+						Logger::error("CGI script was terminated ");
+						fclose(output);
+						close(inputFd);
+						close(outputFd);
+						for (size_t i = 0; env[i]; i++)
+							delete[] env[i];
+						delete[] env;
+						throw std::runtime_error("CGI script terminated by signal");
+					}
+					
 					break;
+				}
 				if (difftime(time(NULL), startTime) >= 5) {
 					Logger::error("CGI process timeout, terminating");
 					kill(pid, SIGKILL);
@@ -142,12 +165,6 @@
 			while (r > 0) {
 				memset(buffer, 0 , 1024);
 				r = read(outputFd, buffer, 1023);
-				if (r < 0){
-					Logger::error("READ ERROR");
-					close(inputFd);
-					throw InternalServerError();
-				}
-
 				resultBody += buffer;
 			}
 		}

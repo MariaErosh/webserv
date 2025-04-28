@@ -11,8 +11,8 @@
 			enum LogLevel
 			{
 				LOG_ERROR = 0,
-				LOG_INFO = 5,
-				LOG_DEBUG = 10
+				LOG_INFO ,
+				LOG_DEBUG
 			};
 
 		private:
