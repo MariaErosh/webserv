@@ -118,7 +118,7 @@
 			for (int socket = 0; socket < FD_SETSIZE; socket++) {
 				if (FD_ISSET(socket, &activeReadSockets)) {
 					if (isListeningSocket(socket)) {  //for listening sockets
-						clientSocket = acceptClient(socket);
+						clientSocket = acceptClient(socket); 
 						socketToConnection_[clientSocket] = socketToConnection_[socket];
 						FD_SET(clientSocket, &masterSockets_);
 					} else { //for client sockets
@@ -156,7 +156,7 @@
 
 	void  Server::handleClient(int clientSocket, fd_set& writableSockets) {
 			if (receiveData(clientSocket) != CLIENT_DISCONNECTED && FD_ISSET(clientSocket, &writableSockets)) {
-				sendData(clientSocket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
+			 //sendData(clientSocket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
 			}
 	}
 
@@ -173,6 +173,7 @@
 
 	int	Server::processData(std::string message, int client) {
 			static std::map<int, std::string>	socket_to_pending_request; // stors content of unfinished request(e.g. for telnet)
+
 
 			Logger::debug("#" + String::convertToString(client) + "Recieved: " + message);
 
@@ -230,9 +231,12 @@
 			while ((bytesRead = recv(socket, dataBuffer, sizeof(dataBuffer) - 1, MSG_DONTWAIT)) > 0) {
 				receivedData.append(dataBuffer, bytesRead);
 			}
-			if (bytesRead <= 0) {
+			if (bytesRead == 0 ) {
 				disconnectClient(socket);
 				return CLIENT_DISCONNECTED;
+			}
+			if (bytesRead < 0 && receivedData.length() == 0) {
+				throw std::runtime_error("Can't recive data");
 			}
 			else {
 				return processData(receivedData, socket);

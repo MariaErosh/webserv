@@ -81,6 +81,9 @@
 		int inputFd = fileno(input);
 		int outputFd = fileno(output);
 		Logger::debug("CgiHandler::executeScript : write to input");
+		if (requestBody.size() == 0){
+			return "";
+		}
 		int r = write(inputFd, requestBody.c_str(), requestBody.size());
 		if (r<0) {
 			Logger::error("WRITE ERROR");
