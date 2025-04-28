@@ -34,9 +34,9 @@
 	{
 		std::string absolutePath;
 		if (filename[0] != '/')
-		absolutePath = File::getCurrDir() + "/" + std::string(filename);
+			absolutePath = File::getCurrDir() + "/" + std::string(filename);
 		else
-		absolutePath = std::string(filename);
+			absolutePath = std::string(filename);
 
 
 		Logger::debug(absolutePath);

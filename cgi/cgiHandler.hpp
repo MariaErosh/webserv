@@ -33,6 +33,10 @@
 				virtual const char  *what() const throw();
 			};
 
+			class	InternalServerError: public std::exception {
+				virtual const char  *what() const throw();
+			};
+
 		private:
 			std::map<std::string, std::string> environment_;
 

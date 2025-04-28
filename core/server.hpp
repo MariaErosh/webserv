@@ -23,6 +23,7 @@
 		void	configure(const char* configPath);
 
 		int		run(void);
+		
 
 	private:
 
@@ -37,12 +38,13 @@
 		int		processData(std::string message, int client);
 		void	sendData(int socket, const char* message, int messageSize) const;
 		void	closeSockets() const;
+		static void 	signalHandler(int signum);
 
 	private:
 		const Config  config_;
 
 		struct ConnectionInfo {
-			std::string ipAddress;
+			std::string ipAddress; 
 			std::string port;
 
 			ConnectionInfo() {}
@@ -51,7 +53,7 @@
 
 			bool operator<(const struct ConnectionInfo& second) const {
 				if (this->ipAddress == second.ipAddress)
-				return (this->port < second.port);
+					return (this->port < second.port);
 				return (this->ipAddress < second.ipAddress);
 			}
 		};

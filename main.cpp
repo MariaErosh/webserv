@@ -1,6 +1,7 @@
 #include "./core/server.hpp"
 #include "./utils/logger.hpp"
 
+
 int main(int argc, const char *argv[]) {
   const char *configPath = "resources/configs/default.conf";
   if (argc >= 2)

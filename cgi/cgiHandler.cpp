@@ -81,7 +81,12 @@
 		int inputFd = fileno(input);
 		int outputFd = fileno(output);
 		Logger::debug("CgiHandler::executeScript : write to input");
-		write(inputFd, requestBody.c_str(), requestBody.size());
+		int r = write(inputFd, requestBody.c_str(), requestBody.size());
+		if (r<0) {
+			Logger::error("WRITE ERROR");
+			close(outputFd);
+			throw InternalServerError();
+		}
 		lseek(inputFd, 0, SEEK_SET);
 
 		Logger::debug("CgiHandler::executeScript : fork");
@@ -134,6 +139,12 @@
 			while (r > 0) {
 				memset(buffer, 0 , 1024);
 				r = read(outputFd, buffer, 1023);
+				if (r < 0){
+					Logger::error("READ ERROR");
+					close(inputFd);
+					throw InternalServerError();
+				}
+
 				resultBody += buffer;
 			}
 		}
@@ -156,6 +167,10 @@
 
 	const char	*CgiHandler::GatewayTimeoutException::what() const throw() {
 		return "Gateway Timeout";
+	};
+
+	const char	*CgiHandler::InternalServerError::what() const throw() {
+		return "Internal Server Error";
 	};
 
 	CgiHandler::CgiHandler() {};
