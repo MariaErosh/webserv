@@ -155,9 +155,11 @@
 	}
 
 	void  Server::handleClient(int clientSocket, fd_set& writableSockets) {
-			if (receiveData(clientSocket) != CLIENT_DISCONNECTED && FD_ISSET(clientSocket, &writableSockets)) {
+		(void)writableSockets;
+		receiveData(clientSocket);
+		/*if (receiveData(clientSocket) != CLIENT_DISCONNECTED && FD_ISSET(clientSocket, &writableSockets)) {
 			 //sendData(clientSocket, "Message has been recieved!\n", sizeof("Message has been recieved!\n"));
-			}
+		}*/
 	}
 
 	void	Server::disconnectClient(int clientSocket) {

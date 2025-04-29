@@ -8,7 +8,13 @@ UPLOAD/DOWNLOAD:
 
 multiple servers with different hostnames:
 curl --resolve webserv.local:8080:127.0.0.1 http://webserv.local:8080/
-curl --resolve test.webserv.local:8082:127.0.0.1 http://test.webserv.local:8081/
-curl --resolve bloom.boutique.webserv.local:8083:127.0.0.1 http://bloom.boutique.webserv.local:8082/
+curl --resolve test.webserv.local:8081:127.0.0.1 http://test.webserv.local:8081/
+curl --resolve bloom.boutique.webserv.local:8082:127.0.0.1 http://bloom.boutique.webserv.local:8082/
 
 siege -v -c 50 -r 100 http://localhost:8080
+
+UNKNOWN
+curl -X FOOBAR http://localhost:8080
+
+DELETE 
+curl -X DELETE http://localhost:8080/upload_and_delete/pict2.jpg -i
